@@ -1,0 +1,42 @@
+{
+    "version": 3,
+    "cmakeMinimumRequired": {
+        "major": 3,
+        "minor": 20,
+        "patch": 0
+    },
+    "configurePresets": [
+        {
+            "name": "windows-release",
+            "displayName": "Windows — Release (MinGW cross-compile)",
+            "description": "Compiles for Windows using MinGW on Linux; produces a static .exe.",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build/windows-release",
+            "toolchainFile": "${sourceDir}/cmake/toolchain-windows-template.cmake",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "CMAKE_POLICY_VERSION_MINIMUM": "3.5"
+            }
+        },
+        {
+            "name": "windows-debug",
+            "displayName": "Windows — Debug (MinGW cross-compile)",
+            "description": "Same toolchain with debug symbols.",
+            "inherits": "windows-release",
+            "binaryDir": "${sourceDir}/build/windows-debug",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug"
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "windows-release",
+            "configurePreset": "windows-release"
+        },
+        {
+            "name": "windows-debug",
+            "configurePreset": "windows-debug"
+        }
+    ]
+}
