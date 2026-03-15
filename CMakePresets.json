@@ -15,7 +15,7 @@
             "toolchainFile": "${sourceDir}/cmake/toolchain-windows-template.cmake",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Release",
-                "CMAKE_POLICY_VERSION_MINIMUM": "3.5"
+                "CMAKE_POLICY_VERSION_MINIMUM": "3.10"
             }
         },
         {
@@ -35,8 +35,22 @@
             "configurePreset": "windows-release"
         },
         {
+            "name": "windows-release-clean",
+            "displayName": "Windows — Release (clean first)",
+            "description": "Deletes previous build artifacts before rebuilding. Dependencies in external/ are preserved.",
+            "configurePreset": "windows-release",
+            "cleanFirst": true
+        },
+        {
             "name": "windows-debug",
             "configurePreset": "windows-debug"
+        },
+        {
+            "name": "windows-debug-clean",
+            "displayName": "Windows — Debug (clean first)",
+            "description": "Deletes previous build artifacts before rebuilding. Dependencies in external/ are preserved.",
+            "configurePreset": "windows-debug",
+            "cleanFirst": true
         }
     ]
 }
