@@ -34,4 +34,4 @@ set(FETCHCONTENT_UPDATES_DISCONNECTED ON CACHE BOOL "" FORCE)
 include(cmake/deps.cmake)
 
 add_subdirectory(tests)
-# add_subdirectory(project1_balistica)
+add_subdirectory(project1_balistica)
