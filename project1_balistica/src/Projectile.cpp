@@ -1,4 +1,5 @@
 #include "Projectile.h"
+#include "core/GlobalDefinitions.h"
 
 #include <cmath>
 

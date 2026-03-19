@@ -9,7 +9,7 @@ namespace physim
     class Simulation
     {
     public:
-        Simulation(Projectile &projectile, Environment &environment);
+        Simulation(Environment &environment, Projectile &projectile);
 
         void run(float timeStep);
         void reset();
@@ -20,7 +20,7 @@ namespace physim
     private:
         Projectile &projectile;
         Environment &environment;
-        float time; // Current simulation time
+        float time;
     };
 }
 

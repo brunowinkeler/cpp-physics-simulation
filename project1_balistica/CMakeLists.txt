@@ -2,6 +2,9 @@ set(EXECUTABLE_NAME "Project1_Balistica")
 
 file(GLOB BALISTICA_SOURCE_FILES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/*.h"
+    "${CMAKE_SOURCE_DIR}/core/*.cpp"
+    "${CMAKE_SOURCE_DIR}/core/*.h"
 )
 
 add_executable(${EXECUTABLE_NAME}
@@ -18,6 +21,7 @@ target_include_directories(${EXECUTABLE_NAME} PRIVATE
     ${imgui_SOURCE_DIR}
     ${glm_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_SOURCE_DIR}
 )
 
 target_link_libraries(${EXECUTABLE_NAME} PRIVATE

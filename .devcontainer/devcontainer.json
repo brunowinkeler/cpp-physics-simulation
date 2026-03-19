@@ -1,7 +1,3 @@
 {
-  "build": {
-    "context": "..",
-    "dockerfile": "Dockerfile"
-  },
-  "postCreateCommand": "git submodule update --init --recursive && git config --replace-all core.autocrlf false && git config --replace-all core.eol lf"
+    "image": "docker.io/brunowinkeler/devcontainer-cpp:latest"
 }

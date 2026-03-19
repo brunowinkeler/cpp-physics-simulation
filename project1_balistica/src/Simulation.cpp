@@ -1,8 +1,10 @@
 #include "Simulation.h"
 
+#include "raylib.h"
+
 namespace physim
 {
-    Simulation::Simulation(Projectile &projectile, Environment &environment)
+    Simulation::Simulation(Environment &environment, Projectile &projectile)
         : projectile{projectile}, environment{environment}, time{0.0f} {}
 
     void Simulation::run(float timeStep)

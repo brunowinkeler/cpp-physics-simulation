@@ -14,9 +14,6 @@ namespace physim
     {
         rlImGuiBegin();
 
-        ImGui::SetNextWindowPos({620, 20}, ImGuiCond_Once);
-        ImGui::SetNextWindowSize({260, 180}, ImGuiCond_Once);
-
         ImGui::Begin("Simulation Controls");
 
         ImGui::TextDisabled("Projectile Parameters");

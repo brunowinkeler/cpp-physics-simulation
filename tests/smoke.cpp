@@ -6,14 +6,8 @@
 
 #include "core/RaylibDefinitions.h"
 
-// Smoke-test: verifies that all dependencies compile and link correctly.
-// Project 1 starts once this window opens without errors.
-
 int main()
 {
-    // ------------------------------------------------------------------
-    // Initialization
-    // ------------------------------------------------------------------
     const int screenW = 1280;
     const int screenH = 720;
 
@@ -22,20 +16,13 @@ int main()
     // SetTargetFPS(60);
     rlImGuiSetup(true); // dark theme
 
-    // ------------------------------------------------------------------
-    // Minimum state for the ImGui panel
-    // ------------------------------------------------------------------
     float gravity = 9.81f;
     float timeScale = 1.0f;
     bool showDemo = false;
 
-    // GLM: just to confirm the library is available
     glm::vec2 origin{static_cast<float>(screenW) / 2.f,
                      static_cast<float>(screenH) / 2.f};
 
-    // ------------------------------------------------------------------
-    // Main loop
-    // ------------------------------------------------------------------
     while (!WindowShouldClose() && !IsKeyDown(KEY_ESCAPE))
     {
         BeginDrawing();
@@ -90,9 +77,6 @@ int main()
         EndDrawing();
     }
 
-    // ------------------------------------------------------------------
-    // Cleanup
-    // ------------------------------------------------------------------
     rlImGuiShutdown();
     CloseWindow();
     return 0;

@@ -31,10 +31,10 @@ namespace physim
         void setPosition(const Position &pos) { position = pos; }
 
     private:
-        float velocity{0.0f};        // Initial velocity (m/s)
-        float angle{0.0f};           // Launch angle (degrees)
-        Position position{0.0, 0.0}; // Current position (x, y)
-        float mass{1.0f};            // Mass (kg)
+        float velocity{0.0f};
+        float angle{0.0f};
+        Position position{0.0, 0.0};
+        float mass{1.0f};
     };
 }
 

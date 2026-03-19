@@ -11,10 +11,9 @@ namespace physim
     public:
         UiMenus() = delete;
         UiMenus(Environment &env, Projectile &proj);
-
-    private:
         void parametersSelectionScreen();
 
+    private:
         Environment &environment;
         Projectile &projectile;
     };
