@@ -1,6 +1,6 @@
 set(EXECUTABLE_NAME "Project1_Balistica")
 
-file(GLOB BALISTICA_SOURCE_FILES
+file(GLOB_RECURSE BALISTICA_SOURCE_FILES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/*.h"
     "${CMAKE_SOURCE_DIR}/core/*.cpp"
@@ -20,7 +20,7 @@ target_include_directories(${EXECUTABLE_NAME} PRIVATE
     ${rlimgui_SOURCE_DIR}
     ${imgui_SOURCE_DIR}
     ${glm_SOURCE_DIR}
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
     ${CMAKE_SOURCE_DIR}
 )
 

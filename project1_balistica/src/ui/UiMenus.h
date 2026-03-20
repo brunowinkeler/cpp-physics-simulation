@@ -1,8 +1,8 @@
 #ifndef UIMENUS_H
 #define UIMENUS_H
 
-#include "Environment.h"
-#include "Projectile.h"
+#include "physics/Environment.h"
+#include "physics/Projectile.h"
 
 namespace physim
 {

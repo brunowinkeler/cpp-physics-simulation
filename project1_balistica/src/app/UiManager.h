@@ -1,10 +1,10 @@
 #ifndef UIMANAGER_H
 #define UIMANAGER_H
 
-#include "Environment.h"
-#include "Simulation.h"
-#include "Projectile.h"
-#include "UiMenus.h"
+#include "physics/Environment.h"
+#include "simulation/Simulation.h"
+#include "physics/Projectile.h"
+#include "ui/UiMenus.h"
 
 namespace physim
 {

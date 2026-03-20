@@ -1,8 +1,8 @@
 #ifndef SIMULATION_H
 #define SIMULATION_H
 
-#include "Projectile.h"
-#include "Environment.h"
+#include "physics/Projectile.h"
+#include "physics/Environment.h"
 
 namespace physim
 {
