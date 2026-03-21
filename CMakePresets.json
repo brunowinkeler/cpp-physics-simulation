@@ -27,6 +27,27 @@
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Debug"
             }
+        },
+        {
+            "name": "linux-release",
+            "displayName": "Linux — Release",
+            "description": "Compiles for Linux; produces a static executable.",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build/linux-release",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "CMAKE_POLICY_VERSION_MINIMUM": "3.10"
+            }
+        },
+        {
+            "name": "linux-debug",
+            "displayName": "Linux — Debug",
+            "description": "Same toolchain with debug symbols.",
+            "inherits": "linux-release",
+            "binaryDir": "${sourceDir}/build/linux-debug",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug"
+            }
         }
     ],
     "buildPresets": [
@@ -50,6 +71,28 @@
             "displayName": "Windows — Debug (clean first)",
             "description": "Deletes previous build artifacts before rebuilding. Dependencies in external/ are preserved.",
             "configurePreset": "windows-debug",
+            "cleanFirst": true
+        },
+        {
+            "name": "linux-release",
+            "configurePreset": "linux-release"
+        },
+        {
+            "name": "linux-release-clean",
+            "displayName": "Linux — Release (clean first)",
+            "description": "Deletes previous build artifacts before rebuilding. Dependencies in external/ are preserved.",
+            "configurePreset": "linux-release",
+            "cleanFirst": true
+        },
+        {
+            "name": "linux-debug",
+            "configurePreset": "linux-debug"
+        },
+        {
+            "name": "linux-debug-clean",
+            "displayName": "Linux — Debug (clean first)",
+            "description": "Deletes previous build artifacts before rebuilding. Dependencies in external/ are preserved.",
+            "configurePreset": "linux-debug",
             "cleanFirst": true
         }
     ]
