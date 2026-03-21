@@ -7,34 +7,46 @@ namespace physim
 {
     struct Position
     {
-        double x;
-        double y;
+        float x;
+        float y;
+    };
+
+    struct Velocity
+    {
+        float vx;
+        float vy;
     };
 
     class Projectile
     {
     public:
         Projectile() = default;
-        Projectile(float velocity, float angle);
+        Projectile(float initialSpeed, float launchAngle);
+
+        Position getPosition() const { return position; }
+        float &getRadius() { return radius; }
+        float &getMass() { return mass; }
+        float &getInitialSpeed() { return initialSpeed; }
+        float &getLaunchAngle() { return launchAngle; }
 
         void update(float timeStep, const Environment &env);
         void reset();
 
-        float &getVelocity() { return velocity; }
-        float &getAngle() { return angle; }
-        Position &getPosition() { return position; }
-        float &getMass() { return mass; }
-
-        void setVelocity(const float v) { velocity = v; }
-        void setAngle(const float a) { angle = a; }
-        void setMass(const float m) { mass = m; }
-        void setPosition(const Position &pos) { position = pos; }
-
     private:
-        float velocity{0.0f};
-        float angle{0.0f};
-        Position position{0.0, 0.0};
+        void updateSymplecticEuler(float timeStep, const Environment &env);
+
+        Position position{0.0f, 0.0f};
+        Velocity velocityVector{0.0f, 0.0f};
+
         float mass{1.0f};
+        float dragCoefficient{0.47f};
+        float radius{0.1f};
+
+        float initialSpeed{0.0f};
+        float launchAngle{0.0f};
+
+        bool launched{false};
+        bool landed{false};
     };
 }
 

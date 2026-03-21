@@ -17,8 +17,8 @@ namespace physim
         ImGui::Begin("Simulation Controls");
 
         ImGui::TextDisabled("Projectile Parameters");
-        ImGui::SliderFloat("Initial Velocity (m/s)", &projectile.getVelocity(), 0.f, 100.f, "%.1f");
-        ImGui::SliderFloat("Launch Angle (degrees)", &projectile.getAngle(), 0.f, 90.f, "%.1f");
+        ImGui::SliderFloat("Initial Velocity (m/s)", &projectile.getInitialSpeed(), 0.f, 100.f, "%.1f");
+        ImGui::SliderFloat("Launch Angle (degrees)", &projectile.getLaunchAngle(), 0.f, 90.f, "%.1f");
         ImGui::SliderFloat("Mass (kg)", &projectile.getMass(), 1.f, 10.f, "%.1f");
         ImGui::Separator();
         ImGui::Spacing();

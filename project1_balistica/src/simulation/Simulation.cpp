@@ -9,17 +9,14 @@ namespace physim
 
     void Simulation::run(float timeStep)
     {
-        while (projectile.getPosition().y >= 0)
-        {
-            projectile.update(timeStep, environment);
-            time += timeStep;
-        }
+        projectile.update(timeStep, environment);
+        time += timeStep;
     }
 
     void Simulation::reset()
     {
         projectile.reset();
-        time = 0.0;
+        time = 0.0f;
     }
 
     Projectile Simulation::getProjectile() const

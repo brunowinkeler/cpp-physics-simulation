@@ -14,9 +14,9 @@ namespace physim
         const int screenW = 1280;
         const int screenH = 720;
 
-        SetConfigFlags(FLAG_VSYNC_HINT | FLAG_MSAA_4X_HINT | FLAG_WINDOW_RESIZABLE);
+        SetConfigFlags(FLAG_WINDOW_MAXIMIZED | FLAG_VSYNC_HINT | FLAG_WINDOW_RESIZABLE);
         InitWindow(screenW, screenH, APP_TITLE);
-        // SetTargetFPS(60);
+        SetTargetFPS(60);   // Fix the frame rate to 60 FPS, for now
         rlImGuiSetup(true); // dark theme
     }
 
@@ -30,7 +30,7 @@ namespace physim
     {
         while (!WindowShouldClose())
         {
-            // updateSimulation();
+            updateSimulation();
 
             draw();
         }
