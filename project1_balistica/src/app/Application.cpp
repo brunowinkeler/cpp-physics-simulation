@@ -1,4 +1,4 @@
-#include "UiManager.h"
+#include "Application.h"
 #include "core/RaylibDefinitions.h"
 #include "ui/UiMenus.h"
 
@@ -12,7 +12,7 @@ namespace physim
 {
     const char *APP_TITLE{"Physics Simulation — Balistica v1.0"};
 
-    UiManager::UiManager() : simulation{environment, projectile}, uiMenus{environment, projectile, simulation}, backgroundRenderer{}
+    Application::Application() : simulation{environment, projectile}, uiMenus{environment, projectile, simulation}, backgroundRenderer{}
     {
         const int screenW = 1280;
         const int screenH = 720;
@@ -23,13 +23,13 @@ namespace physim
         rlImGuiSetup(true); // dark theme
     }
 
-    UiManager::~UiManager()
+    Application::~Application()
     {
         rlImGuiShutdown();
         CloseWindow();
     }
 
-    void UiManager::run()
+    void Application::run()
     {
         while (!WindowShouldClose())
         {
@@ -40,17 +40,17 @@ namespace physim
         }
     }
 
-    void UiManager::updateSimulation()
+    void Application::updateSimulation()
     {
         float timeStep = GetFrameTime() * environment.timeScale; // Scale time step by environment's time scale
         simulation.update(timeStep);
     }
 
-    void UiManager::updateEvents()
+    void Application::updateEvents()
     {
     }
 
-    void UiManager::drawWithCamera()
+    void Application::drawWithCamera()
     {
         BeginMode2D(camera.getCamera2D());
         backgroundRenderer.render();
@@ -58,7 +58,7 @@ namespace physim
         EndMode2D();
     }
 
-    void UiManager::draw()
+    void Application::draw()
     {
         BeginDrawing();
         ClearBackground(physim::colors::CatppuccinMocha); // dark background (Catppuccin Mocha)

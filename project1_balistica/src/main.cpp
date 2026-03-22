@@ -1,10 +1,10 @@
-#include "app/UiManager.h"
+#include "app/Application.h"
 
 int main()
 {
-    physim::UiManager uiManager;
+    physim::Application application;
 
-    uiManager.run();
+    application.run();
 
     return 0;
 }

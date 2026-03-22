@@ -1,5 +1,5 @@
-#ifndef UIMANAGER_H
-#define UIMANAGER_H
+#ifndef APPLICATION_H
+#define APPLICATION_H
 
 #include "physics/Environment.h"
 #include "simulation/Simulation.h"
@@ -11,11 +11,11 @@
 
 namespace physim
 {
-    class UiManager
+    class Application
     {
     public:
-        UiManager();
-        ~UiManager();
+        Application();
+        ~Application();
 
         void run();
         void reset();
@@ -37,4 +37,4 @@ namespace physim
     };
 }
 
-#endif // UIMANAGER_H
+#endif // APPLICATION_H
