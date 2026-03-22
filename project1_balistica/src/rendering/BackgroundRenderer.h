@@ -21,6 +21,8 @@ namespace physim
         void render();
 
     private:
+        void drawFloor();
+
         std::array<Building, MAX_BUILDINGS> buildings;
     };
 } // namespace physim

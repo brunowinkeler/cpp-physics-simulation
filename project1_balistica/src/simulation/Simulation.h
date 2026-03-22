@@ -11,7 +11,9 @@ namespace physim
     public:
         Simulation(Environment &environment, Projectile &projectile);
 
-        void run(float timeStep);
+        void start();
+        void stop();
+        void update(float timeStep);
         void reset();
 
         Projectile getProjectile() const;
@@ -21,6 +23,8 @@ namespace physim
         Projectile &projectile;
         Environment &environment;
         float time;
+
+        bool running{false};
     };
 }
 

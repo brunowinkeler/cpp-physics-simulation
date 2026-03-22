@@ -9,7 +9,6 @@ namespace physim
     {
     public:
         ProjectileRenderer(Projectile &projectile) : projectile{projectile} {};
-        ~ProjectileRenderer();
 
         void render();
 

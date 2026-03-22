@@ -7,16 +7,31 @@ namespace physim
     Simulation::Simulation(Environment &environment, Projectile &projectile)
         : projectile{projectile}, environment{environment}, time{0.0f} {}
 
-    void Simulation::run(float timeStep)
+    void Simulation::start()
     {
-        projectile.update(timeStep, environment);
-        time += timeStep;
+        running = true;
+        projectile.launch();
+    }
+
+    void Simulation::stop()
+    {
+        running = false;
+    }
+
+    void Simulation::update(float timeStep)
+    {
+        if (running)
+        {
+            projectile.update(timeStep, environment);
+            time += timeStep;
+        }
     }
 
     void Simulation::reset()
     {
         projectile.reset();
         time = 0.0f;
+        running = false;
     }
 
     Projectile Simulation::getProjectile() const

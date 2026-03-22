@@ -5,31 +5,32 @@
 
 namespace physim
 {
-    Projectile::Projectile(float initialSpeed, float launchAngle)
-        : initialSpeed{initialSpeed}, launchAngle{launchAngle}, position{0.0, 0.0}, mass{1.0f} {}
+    Projectile::Projectile()
+        : initialSpeed{initialSpeed}, launchAngle{launchAngle}, position{0.0, 0.0}, mass{1.0f}
+    {
+    }
 
     void Projectile::update(float timeStep, const Environment &env)
     {
-        if (!launched)
-        {
-            // Initialize velocity vector based on initial speed and launch angle
-            float radianAngle = launchAngle * constants::DEG_TO_RAD;
-            velocityVector.vx = initialSpeed * std::cos(radianAngle);
-            velocityVector.vy = initialSpeed * std::sin(radianAngle);
-            launched = true;
-        }
-
         if (!landed)
         {
             updateSymplecticEuler(timeStep, env);
 
-            // Check for landing
             if (position.y <= 0.0f)
             {
-                position.y = 0.0f; // Ensure it doesn't go below ground
+                position.y = 0.0f;
+                velocityVector = {0.0f, 0.0f};
                 landed = true;
             }
         }
+    }
+
+    void Projectile::launch()
+    {
+        float radianAngle = launchAngle * constants::DEG_TO_RAD;
+        velocityVector.vx = initialSpeed * std::cos(radianAngle);
+        velocityVector.vy = initialSpeed * std::sin(radianAngle);
+        launched = true;
     }
 
     void Projectile::reset()

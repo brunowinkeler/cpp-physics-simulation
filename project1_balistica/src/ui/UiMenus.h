@@ -3,6 +3,7 @@
 
 #include "physics/Environment.h"
 #include "physics/Projectile.h"
+#include "simulation/Simulation.h"
 
 namespace physim
 {
@@ -10,12 +11,15 @@ namespace physim
     {
     public:
         UiMenus() = delete;
-        UiMenus(Environment &env, Projectile &proj);
+        UiMenus(Environment &env, Projectile &proj, Simulation &sim);
         void parametersSelectionScreen();
 
     private:
         Environment &environment;
         Projectile &projectile;
+        Simulation &simulation;
+
+        bool showDemoWindow{false}; // For testing and demonstration purposes
     };
 } // namespace physim
 
