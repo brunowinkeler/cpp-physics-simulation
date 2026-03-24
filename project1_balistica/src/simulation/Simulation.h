@@ -23,6 +23,7 @@ namespace physim
         Projectile &projectile;
         Environment &environment;
         float time;
+        float timeStepPhysics{0.001f};
 
         bool running{false};
     };

@@ -4,13 +4,17 @@
 
 namespace physim
 {
+
     Simulation::Simulation(Environment &environment, Projectile &projectile)
         : projectile{projectile}, environment{environment}, time{0.0f} {}
 
     void Simulation::start()
     {
         running = true;
-        projectile.launch();
+        if (!projectile.isLaunched())
+        {
+            projectile.launch();
+        }
     }
 
     void Simulation::stop()
@@ -22,8 +26,12 @@ namespace physim
     {
         if (running)
         {
-            projectile.update(timeStep, environment);
             time += timeStep;
+            while (time >= timeStepPhysics)
+            {
+                projectile.update(timeStepPhysics, environment);
+                time -= timeStepPhysics;
+            }
         }
     }
 

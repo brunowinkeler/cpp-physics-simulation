@@ -7,7 +7,7 @@ namespace physim
     {
         float gravity = 9.81f;
         float airDensity = 0.0f;
-        float timeScale = 1.0f;
+        float timeScale = 3.0f;
     };
 }
 

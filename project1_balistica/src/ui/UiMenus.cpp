@@ -17,18 +17,18 @@ namespace physim
         ImGui::Begin("Simulation Controls");
 
         ImGui::TextDisabled("Projectile Parameters");
-        ImGui::SliderFloat("Initial Velocity (m/s)", &projectile.getInitialSpeed(), 0.f, 100.f, "%.1f");
-        ImGui::SliderFloat("Launch Angle (degrees)", &projectile.getLaunchAngle(), 0.f, 90.f, "%.1f");
-        ImGui::SliderFloat("Mass (kg)", &projectile.getMass(), 1.f, 10.f, "%.1f");
+        ImGui::InputFloat("Initial Velocity (m/s)", &projectile.getInitialSpeed(), 0.1f, 100.f, "%.1f");
+        ImGui::InputFloat("Launch Angle (degrees)", &projectile.getLaunchAngle(), 0.1f, 90.f, "%.1f");
+        ImGui::InputFloat("Mass (kg)", &projectile.getMass(), 0.1f, 10.f, "%.1f");
         ImGui::Separator();
         ImGui::Spacing();
         ImGui::TextDisabled("Environment Parameters");
-        ImGui::SliderFloat("Gravity (m/s^2)", &environment.gravity, 0.f, 30.f, "%.2f");
-        ImGui::SliderFloat("Air Density (kg/m^3)", &environment.airDensity, 0.f, 2.0f, "%.2f");
+        ImGui::InputFloat("Gravity (m/s^2)", &environment.gravity, 0.1f, 30.f, "%.2f");
+        ImGui::InputFloat("Air Density (kg/m^3)", &environment.airDensity, 0.01f, 2.0f, "%.2f");
         ImGui::Separator();
         ImGui::Spacing();
         ImGui::TextDisabled("Simulation Parameters");
-        ImGui::SliderFloat("Time Scale", &environment.timeScale, 0.1f, 5.f, "%.1fx");
+        ImGui::InputFloat("Time Scale", &environment.timeScale, 0.1f, 5.f, "%.1fx");
         ImGui::Separator();
         ImGui::Spacing();
         ImGui::TextDisabled("Controls");
@@ -37,17 +37,17 @@ namespace physim
         {
             ImGui::ShowDemoWindow();
         }
-        if (ImGui::Button("Start Simulation"))
+        if (ImGui::Button("Start"))
         {
             simulation.start();
         }
         ImGui::SameLine();
-        if (ImGui::Button("Stop Simulation"))
+        if (ImGui::Button("Stop"))
         {
             simulation.stop();
         }
         ImGui::SameLine();
-        if (ImGui::Button("Reset Simulation"))
+        if (ImGui::Button("Reset"))
         {
             simulation.reset();
         }
