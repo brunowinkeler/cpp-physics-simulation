@@ -17,13 +17,24 @@ namespace physim
         float vy;
     };
 
+    struct State
+    {
+        float x, y, vx, vy;
+    };
+
+    struct Derivative
+    {
+        float dx, dy, dvx, dvy;
+    };
+
     class Projectile
     {
     public:
         Projectile();
 
         Position getPosition() const { return position; }
-        float &getRadius() { return radius; }
+        float getRadius() const { return radius; }
+
         float &getMass() { return mass; }
         float &getInitialSpeed() { return initialSpeed; }
         float &getLaunchAngle() { return launchAngle; }
@@ -36,6 +47,8 @@ namespace physim
         void reset();
 
     private:
+        Derivative evaluate(const State &state, const Environment &env);
+        void updateRK4(float timeStep, const Environment &env);
         void updateSymplecticEuler(float timeStep, const Environment &env);
 
         Position position{0.0f, 0.0f};
@@ -45,7 +58,7 @@ namespace physim
         float dragCoefficient{0.47f}; // dimensionless, for a sphere
         float radius{1.0f};           // meters
 
-        float initialSpeed{10.0f}; // m/s
+        float initialSpeed{50.0f}; // m/s
         float launchAngle{45.0f};  // degrees
 
         bool launched{false};

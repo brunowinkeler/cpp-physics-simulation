@@ -6,7 +6,7 @@
 namespace physim
 {
     Projectile::Projectile()
-        : initialSpeed{initialSpeed}, launchAngle{launchAngle}, position{0.0, 0.0}, mass{1.0f}
+        : position{0.0, 0.0}, mass{1.0f}
     {
     }
 
@@ -14,7 +14,7 @@ namespace physim
     {
         if (!landed)
         {
-            updateSymplecticEuler(timeStep, env);
+            updateRK4(timeStep, env);
 
             if (position.y <= 0.0f)
             {
@@ -37,25 +37,64 @@ namespace physim
     {
         position = {0.0, 0.0};
         velocityVector = {0.0f, 0.0f};
-        initialSpeed = 0.0f;
-        launchAngle = 0.0f;
-        mass = 1.0f;
         launched = false;
         landed = false;
     }
 
     void Projectile::updateSymplecticEuler(float timeStep, const Environment &env)
     {
-        // Calculate acceleration due to gravity
         float ax = 0.0f;
         float ay = -env.gravity;
 
-        // Update velocity
         velocityVector.vx += ax * timeStep;
         velocityVector.vy += ay * timeStep;
 
-        // Update position
         position.x += velocityVector.vx * timeStep;
         position.y += velocityVector.vy * timeStep;
+    }
+
+    Derivative Projectile::evaluate(const State &state, const Environment &env)
+    {
+        float speed = std::sqrt(state.vx * state.vx + state.vy * state.vy);
+
+        float ax = 0.0f;
+        float ay = -env.gravity;
+
+        return {state.vx, state.vy, ax, ay};
+    }
+
+    void Projectile::updateRK4(float timeStep, const Environment &env)
+    {
+        State current = {position.x, position.y, velocityVector.vx, velocityVector.vy};
+
+        // k1: derivada no início do passo
+        Derivative k1 = evaluate(current, env);
+
+        // k2: derivada no meio do passo, usando k1
+        State s2 = {current.x + k1.dx * timeStep * 0.5f,
+                    current.y + k1.dy * timeStep * 0.5f,
+                    current.vx + k1.dvx * timeStep * 0.5f,
+                    current.vy + k1.dvy * timeStep * 0.5f};
+        Derivative k2 = evaluate(s2, env);
+
+        // k3: derivada no meio do passo, usando k2
+        State s3 = {current.x + k2.dx * timeStep * 0.5f,
+                    current.y + k2.dy * timeStep * 0.5f,
+                    current.vx + k2.dvx * timeStep * 0.5f,
+                    current.vy + k2.dvy * timeStep * 0.5f};
+        Derivative k3 = evaluate(s3, env);
+
+        // k4: derivada no fim do passo, usando k3
+        State s4 = {current.x + k3.dx * timeStep,
+                    current.y + k3.dy * timeStep,
+                    current.vx + k3.dvx * timeStep,
+                    current.vy + k3.dvy * timeStep};
+        Derivative k4 = evaluate(s4, env);
+
+        // Média ponderada
+        position.x += (timeStep / 6.0f) * (k1.dx + 2 * k2.dx + 2 * k3.dx + k4.dx);
+        position.y += (timeStep / 6.0f) * (k1.dy + 2 * k2.dy + 2 * k3.dy + k4.dy);
+        velocityVector.vx += (timeStep / 6.0f) * (k1.dvx + 2 * k2.dvx + 2 * k3.dvx + k4.dvx);
+        velocityVector.vy += (timeStep / 6.0f) * (k1.dvy + 2 * k2.dvy + 2 * k3.dvy + k4.dvy);
     }
 } // namespace physim
