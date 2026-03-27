@@ -10,15 +10,23 @@ namespace physim
     {
     }
 
+    float Projectile::getCurrentSpeed() const
+    {
+        return std::sqrt(velocityVector.vx * velocityVector.vx + velocityVector.vy * velocityVector.vy);
+    }
+
     void Projectile::update(float timeStep, const Environment &env)
     {
         if (!landed)
         {
             updateRK4(timeStep, env);
 
-            if (position.y <= 0.0f)
+            if (position.y < 0.0f)
             {
+                float prevY = position.y - velocityVector.vy * timeStep; // posição anterior (era > 0)
+                float fraction = prevY / (prevY - position.y);
                 position.y = 0.0f;
+                position.x = (position.x - velocityVector.vx * timeStep) + velocityVector.vx * timeStep * fraction;
                 velocityVector = {0.0f, 0.0f};
                 landed = true;
             }
@@ -67,24 +75,20 @@ namespace physim
     {
         State current = {position.x, position.y, velocityVector.vx, velocityVector.vy};
 
-        // k1: derivada no início do passo
         Derivative k1 = evaluate(current, env);
 
-        // k2: derivada no meio do passo, usando k1
         State s2 = {current.x + k1.dx * timeStep * 0.5f,
                     current.y + k1.dy * timeStep * 0.5f,
                     current.vx + k1.dvx * timeStep * 0.5f,
                     current.vy + k1.dvy * timeStep * 0.5f};
         Derivative k2 = evaluate(s2, env);
 
-        // k3: derivada no meio do passo, usando k2
         State s3 = {current.x + k2.dx * timeStep * 0.5f,
                     current.y + k2.dy * timeStep * 0.5f,
                     current.vx + k2.dvx * timeStep * 0.5f,
                     current.vy + k2.dvy * timeStep * 0.5f};
         Derivative k3 = evaluate(s3, env);
 
-        // k4: derivada no fim do passo, usando k3
         State s4 = {current.x + k3.dx * timeStep,
                     current.y + k3.dy * timeStep,
                     current.vx + k3.dvx * timeStep,

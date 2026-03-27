@@ -34,6 +34,7 @@ namespace physim
 
         Position getPosition() const { return position; }
         float getRadius() const { return radius; }
+        float getCurrentSpeed() const;
 
         float &getMass() { return mass; }
         float &getInitialSpeed() { return initialSpeed; }
