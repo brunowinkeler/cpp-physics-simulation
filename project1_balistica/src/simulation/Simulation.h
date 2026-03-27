@@ -3,6 +3,7 @@
 
 #include "physics/Projectile.h"
 #include "physics/Environment.h"
+#include "TrajectoryRecorder.h"
 
 namespace physim
 {
@@ -19,10 +20,15 @@ namespace physim
         Projectile getProjectile() const;
         Environment getEnvironment() const;
 
+        float getTimeGlobal() const { return timeGlobal; }
+
     private:
         Projectile &projectile;
         Environment &environment;
-        float time;
+        TrajectoryRecorder trajectoryRecorder;
+
+        float timePerFrame;
+        float timeGlobal;
         float timeStepPhysics{0.001f};
 
         bool running{false};

@@ -6,7 +6,7 @@ namespace physim
 {
 
     Simulation::Simulation(Environment &environment, Projectile &projectile)
-        : projectile{projectile}, environment{environment}, time{0.0f} {}
+        : projectile{projectile}, environment{environment}, timePerFrame{0.0f} {}
 
     void Simulation::start()
     {
@@ -26,11 +26,17 @@ namespace physim
     {
         if (running)
         {
-            time += timeStep;
-            while (time >= timeStepPhysics)
+            timeGlobal += timeStep;
+            timePerFrame += timeStep;
+
+            trajectoryRecorder.record(projectile.getPosition().x, projectile.getPosition().y,
+                                      timeGlobal,
+                                      projectile.getCurrentSpeed());
+
+            while (timePerFrame >= timeStepPhysics)
             {
                 projectile.update(timeStepPhysics, environment);
-                time -= timeStepPhysics;
+                timePerFrame -= timeStepPhysics;
             }
         }
     }
@@ -38,7 +44,7 @@ namespace physim
     void Simulation::reset()
     {
         projectile.reset();
-        time = 0.0f;
+        timePerFrame = 0.0f;
         running = false;
     }
 
