@@ -12,6 +12,10 @@ namespace physim
 
     void UiMenus::parametersSelectionScreen()
     {
+        constexpr const char *integrationMethods[] = {
+            "Symplectic Euler",
+            "Runge-Kutta 4"};
+
         rlImGuiBegin();
 
         ImGui::Begin("Simulation Controls");
@@ -32,14 +36,19 @@ namespace physim
         ImGui::Spacing();
         ImGui::TextDisabled("Simulation Parameters");
         ImGui::InputFloat("Time Scale", &environment.timeScale, 0.1f, 5.f, "%.1fx");
+        int integrationMethodIndex = static_cast<int>(projectile.getIntegrationMethod());
+        if (ImGui::Combo("Integration Method", &integrationMethodIndex, integrationMethods, IM_ARRAYSIZE(integrationMethods)))
+        {
+            projectile.setIntegrationMethod(static_cast<IntegrationMethod>(integrationMethodIndex));
+        }
+        float physicsTimeStep = simulation.getPhysicsTimeStep();
+        if (ImGui::InputFloat("Physics Time Step (s)", &physicsTimeStep, 0.0001f, 0.001f, "%.4f"))
+        {
+            simulation.setPhysicsTimeStep(physicsTimeStep);
+        }
         ImGui::Separator();
         ImGui::Spacing();
         ImGui::TextDisabled("Controls");
-        ImGui::Checkbox("Show ImGui Demo Window", &showDemoWindow); // For testing and demonstration purposes
-        if (showDemoWindow)
-        {
-            ImGui::ShowDemoWindow();
-        }
         if (ImGui::Button("Start"))
         {
             simulation.start();

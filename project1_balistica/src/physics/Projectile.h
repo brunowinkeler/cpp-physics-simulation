@@ -27,6 +27,12 @@ namespace physim
         float dx, dy, dvx, dvy;
     };
 
+    enum class IntegrationMethod
+    {
+        SymplecticEuler = 0,
+        RungeKutta4
+    };
+
     class Projectile
     {
     public:
@@ -39,6 +45,8 @@ namespace physim
         float &getMass() { return mass; }
         float &getInitialSpeed() { return initialSpeed; }
         float &getLaunchAngle() { return launchAngle; }
+        IntegrationMethod getIntegrationMethod() const { return integrationMethod; }
+        void setIntegrationMethod(IntegrationMethod method) { integrationMethod = method; }
 
         void launch();
         bool isLaunched() const { return launched; }
@@ -61,6 +69,8 @@ namespace physim
 
         float initialSpeed{50.0f}; // m/s
         float launchAngle{45.0f};  // degrees
+
+        IntegrationMethod integrationMethod{IntegrationMethod::RungeKutta4};
 
         bool launched{false};
         bool landed{false};

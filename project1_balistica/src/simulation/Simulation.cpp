@@ -2,11 +2,13 @@
 
 #include "raylib.h"
 
+#include <algorithm>
+
 namespace physim
 {
 
     Simulation::Simulation(Environment &environment, Projectile &projectile)
-        : projectile{projectile}, environment{environment}, timePerFrame{0.0f} {}
+        : projectile{projectile}, environment{environment} {}
 
     void Simulation::start()
     {
@@ -45,7 +47,13 @@ namespace physim
     {
         projectile.reset();
         timePerFrame = 0.0f;
+        timeGlobal = 0.0f;
         running = false;
+    }
+
+    void Simulation::setPhysicsTimeStep(float timeStep)
+    {
+        timeStepPhysics = std::max(timeStep, 0.0001f);
     }
 
     Projectile Simulation::getProjectile() const

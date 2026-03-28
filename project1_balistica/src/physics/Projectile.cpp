@@ -50,7 +50,16 @@ namespace physim
         {
             Position previousPosition = position;
 
-            updateRK4(timeStep, env);
+            switch (integrationMethod)
+            {
+            case IntegrationMethod::SymplecticEuler:
+                updateSymplecticEuler(timeStep, env);
+                break;
+            case IntegrationMethod::RungeKutta4:
+            default:
+                updateRK4(timeStep, env);
+                break;
+            }
 
             if (previousPosition.y >= 0.0f && position.y < 0.0f)
             {

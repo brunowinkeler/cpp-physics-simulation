@@ -21,14 +21,16 @@ namespace physim
         Environment getEnvironment() const;
 
         float getTimeGlobal() const { return timeGlobal; }
+        float getPhysicsTimeStep() const { return timeStepPhysics; }
+        void setPhysicsTimeStep(float timeStep);
 
     private:
         Projectile &projectile;
         Environment &environment;
         TrajectoryRecorder trajectoryRecorder;
 
-        float timePerFrame;
-        float timeGlobal;
+        float timePerFrame{0.0f};
+        float timeGlobal{0.0f};
         float timeStepPhysics{0.001f};
 
         bool running{false};
