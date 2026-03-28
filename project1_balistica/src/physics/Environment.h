@@ -6,7 +6,8 @@ namespace physim
     struct Environment
     {
         float gravity = 9.81f;
-        float airDensity = 0.0f;
+        float airDensity = 1.225f;
+        bool airResistanceEnabled = false;
         float timeScale = 3.0f;
     };
 }

@@ -24,7 +24,10 @@ namespace physim
         ImGui::Spacing();
         ImGui::TextDisabled("Environment Parameters");
         ImGui::InputFloat("Gravity (m/s^2)", &environment.gravity, 0.1f, 30.f, "%.2f");
+        ImGui::Checkbox("Enable Air Resistance", &environment.airResistanceEnabled);
+        ImGui::BeginDisabled(!environment.airResistanceEnabled);
         ImGui::InputFloat("Air Density (kg/m^3)", &environment.airDensity, 0.01f, 2.0f, "%.2f");
+        ImGui::EndDisabled();
         ImGui::Separator();
         ImGui::Spacing();
         ImGui::TextDisabled("Simulation Parameters");

@@ -5,6 +5,35 @@
 
 namespace physim
 {
+    namespace
+    {
+        constexpr float MIN_EFFECTIVE_MASS = 0.001f;
+
+        Velocity computeDragAcceleration(float vx, float vy, const Environment &env,
+                                         float mass, float dragCoefficient, float radius)
+        {
+            if (!env.airResistanceEnabled || env.airDensity <= 0.0f)
+            {
+                return {0.0f, 0.0f};
+            }
+
+            float speedSquared = (vx * vx) + (vy * vy);
+            if (speedSquared <= 0.0f)
+            {
+                return {0.0f, 0.0f};
+            }
+
+            float speed = std::sqrt(speedSquared);
+            float effectiveMass = std::fmax(mass, MIN_EFFECTIVE_MASS);
+            float crossSectionArea = constants::PI * radius * radius;
+            float dragScale = (0.5f * env.airDensity * dragCoefficient * crossSectionArea) / effectiveMass;
+
+            return {
+                -dragScale * speed * vx,
+                -dragScale * speed * vy};
+        }
+    }
+
     Projectile::Projectile()
         : position{0.0, 0.0}, mass{1.0f}
     {
@@ -19,14 +48,15 @@ namespace physim
     {
         if (!landed)
         {
+            Position previousPosition = position;
+
             updateRK4(timeStep, env);
 
-            if (position.y < 0.0f)
+            if (previousPosition.y >= 0.0f && position.y < 0.0f)
             {
-                float prevY = position.y - velocityVector.vy * timeStep; // posição anterior (era > 0)
-                float fraction = prevY / (prevY - position.y);
+                float fraction = previousPosition.y / (previousPosition.y - position.y);
+                position.x = previousPosition.x + ((position.x - previousPosition.x) * fraction);
                 position.y = 0.0f;
-                position.x = (position.x - velocityVector.vx * timeStep) + velocityVector.vx * timeStep * fraction;
                 velocityVector = {0.0f, 0.0f};
                 landed = true;
             }
@@ -49,26 +79,32 @@ namespace physim
         landed = false;
     }
 
+    Derivative Projectile::evaluate(const State &state, const Environment &env)
+    {
+        float ax = 0.0f;
+        float ay = -env.gravity;
+
+        Velocity dragAcceleration = computeDragAcceleration(state.vx, state.vy, env, mass, dragCoefficient, radius);
+        ax += dragAcceleration.vx;
+        ay += dragAcceleration.vy;
+
+        return {state.vx, state.vy, ax, ay};
+    }
+
     void Projectile::updateSymplecticEuler(float timeStep, const Environment &env)
     {
         float ax = 0.0f;
         float ay = -env.gravity;
+
+        Velocity dragAcceleration = computeDragAcceleration(velocityVector.vx, velocityVector.vy, env, mass, dragCoefficient, radius);
+        ax += dragAcceleration.vx;
+        ay += dragAcceleration.vy;
 
         velocityVector.vx += ax * timeStep;
         velocityVector.vy += ay * timeStep;
 
         position.x += velocityVector.vx * timeStep;
         position.y += velocityVector.vy * timeStep;
-    }
-
-    Derivative Projectile::evaluate(const State &state, const Environment &env)
-    {
-        float speed = std::sqrt(state.vx * state.vx + state.vy * state.vy);
-
-        float ax = 0.0f;
-        float ay = -env.gravity;
-
-        return {state.vx, state.vy, ax, ay};
     }
 
     void Projectile::updateRK4(float timeStep, const Environment &env)
