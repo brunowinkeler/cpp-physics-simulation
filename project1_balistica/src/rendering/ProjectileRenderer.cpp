@@ -4,11 +4,14 @@
 #include "raylib.h"
 #include "raymath.h"
 
+#include <algorithm>
+
 #include "ProjectileCoordinatesAdapter.h"
 
 namespace physim
 {
     inline constexpr float RADIUS_SCALE = 5.0f;
+    inline constexpr float MIN_SCREEN_RADIUS = 4.0f;
     inline constexpr float TEXT_OFFSET = 8.0f;
     inline constexpr float FONT_SIZE = 14.0f;
     inline constexpr float FONT_SPACING = 2.0f;
@@ -17,7 +20,7 @@ namespace physim
     {
         Position projectilePos = projectile.getPosition();
         Position screenPos = ProjectileCoordinatesAdapter::toScreenCoordinates(projectile.getPosition());
-        float radius = projectile.getRadius() * RADIUS_SCALE; // Scale radius for better visibility
+        float radius = std::max(projectile.getRadius() * RADIUS_SCALE, MIN_SCREEN_RADIUS);
         screenPos.y -= radius;
         DrawCircleV({screenPos.x, screenPos.y}, radius, colors::LightPink);
         DrawTextEx(GetFontDefault(),

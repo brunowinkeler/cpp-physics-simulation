@@ -19,12 +19,18 @@ namespace physim
 
     struct State
     {
-        float x, y, vx, vy;
+        double x;
+        double y;
+        double vx;
+        double vy;
     };
 
     struct Derivative
     {
-        float dx, dy, dvx, dvy;
+        double dx;
+        double dy;
+        double dvx;
+        double dvy;
     };
 
     enum class IntegrationMethod
@@ -38,8 +44,14 @@ namespace physim
     public:
         Projectile();
 
-        Position getPosition() const { return position; }
+        Position getPosition() const
+        {
+            return {static_cast<float>(state.x), static_cast<float>(state.y)};
+        }
         float getRadius() const { return radius; }
+        float &getRadius() { return radius; }
+        float getDragCoefficient() const { return dragCoefficient; }
+        float &getDragCoefficient() { return dragCoefficient; }
         float getCurrentSpeed() const;
 
         float &getMass() { return mass; }
@@ -57,15 +69,15 @@ namespace physim
 
     private:
         Derivative evaluate(const State &state, const Environment &env);
-        void updateRK4(float timeStep, const Environment &env);
-        void updateSymplecticEuler(float timeStep, const Environment &env);
+        void updateRK4(double timeStep, const Environment &env);
+        void updateSymplecticEuler(double timeStep, const Environment &env);
+        void resolveLanding(double timeStep, const State &previousState);
 
-        Position position{0.0f, 0.0f};
-        Velocity velocityVector{0.0f, 0.0f};
+        State state{0.0, 0.0, 0.0, 0.0};
 
-        float mass{1.0f};             // kg
+        float mass{0.145f};           // kg
         float dragCoefficient{0.47f}; // dimensionless, for a sphere
-        float radius{1.0f};           // meters
+        float radius{0.0366f};        // meters
 
         float initialSpeed{50.0f}; // m/s
         float launchAngle{45.0f};  // degrees

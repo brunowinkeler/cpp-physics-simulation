@@ -3,8 +3,17 @@
 #include "imgui.h"
 #include "rlImGui.h"
 
+#include <algorithm>
+
 namespace physim
 {
+    namespace
+    {
+        constexpr float MIN_PROJECTILE_MASS = 0.001f;
+        constexpr float MIN_PROJECTILE_RADIUS = 0.001f;
+        constexpr float MIN_TIME_SCALE = 0.1f;
+    }
+
     UiMenus::UiMenus(Environment &env, Projectile &proj, Simulation &sim)
         : environment{env}, projectile{proj}, simulation{sim}
     {
@@ -23,7 +32,9 @@ namespace physim
         ImGui::TextDisabled("Projectile Parameters");
         ImGui::InputFloat("Initial Velocity (m/s)", &projectile.getInitialSpeed(), 0.1f, 100.f, "%.1f");
         ImGui::InputFloat("Launch Angle (degrees)", &projectile.getLaunchAngle(), 0.1f, 90.f, "%.1f");
-        ImGui::InputFloat("Mass (kg)", &projectile.getMass(), 0.1f, 10.f, "%.1f");
+        ImGui::InputFloat("Mass (kg)", &projectile.getMass(), 0.01f, 0.1f, "%.3f");
+        ImGui::InputFloat("Radius (m)", &projectile.getRadius(), 0.001f, 0.01f, "%.4f");
+        ImGui::InputFloat("Drag Coefficient", &projectile.getDragCoefficient(), 0.01f, 0.1f, "%.3f");
         ImGui::Separator();
         ImGui::Spacing();
         ImGui::TextDisabled("Environment Parameters");
@@ -35,7 +46,7 @@ namespace physim
         ImGui::Separator();
         ImGui::Spacing();
         ImGui::TextDisabled("Simulation Parameters");
-        ImGui::InputFloat("Time Scale", &environment.timeScale, 0.1f, 5.f, "%.1fx");
+        ImGui::InputFloat("Time Scale", &environment.timeScale, 0.001f, 5.f, "%.4fx");
         int integrationMethodIndex = static_cast<int>(projectile.getIntegrationMethod());
         if (ImGui::Combo("Integration Method", &integrationMethodIndex, integrationMethods, IM_ARRAYSIZE(integrationMethods)))
         {
@@ -46,6 +57,15 @@ namespace physim
         {
             simulation.setPhysicsTimeStep(physicsTimeStep);
         }
+
+        projectile.getInitialSpeed() = std::max(projectile.getInitialSpeed(), 0.0f);
+        projectile.getMass() = std::max(projectile.getMass(), MIN_PROJECTILE_MASS);
+        projectile.getRadius() = std::max(projectile.getRadius(), MIN_PROJECTILE_RADIUS);
+        projectile.getDragCoefficient() = std::max(projectile.getDragCoefficient(), 0.0f);
+        environment.gravity = std::max(environment.gravity, 0.0f);
+        environment.airDensity = std::max(environment.airDensity, 0.0f);
+        environment.timeScale = std::max(environment.timeScale, MIN_TIME_SCALE);
+
         ImGui::Separator();
         ImGui::Spacing();
         ImGui::TextDisabled("Controls");
