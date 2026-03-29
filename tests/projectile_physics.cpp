@@ -11,6 +11,14 @@ namespace
     constexpr float GRAVITY = 9.81f;
     constexpr float TIME_LIMIT = 60.0f;
 
+    void runSimulationUntilStopped(physim::Simulation &simulation, int maxSteps, float frameStep)
+    {
+        for (int step = 0; step < maxSteps && simulation.isRunning(); ++step)
+        {
+            simulation.update(frameStep);
+        }
+    }
+
     bool expectNear(double actual, double expected, double tolerance, const char *label)
     {
         if (std::abs(actual - expected) <= tolerance)
@@ -156,6 +164,59 @@ namespace
                expectNear(apexPoint->y, expectedApexHeight, 0.05, "Apex height") &&
                expectNear(apexPoint->x, expectedApexX, 0.05, "Apex horizontal position");
     }
+
+    bool testResetArchivesTrajectoryHistoryAndDeduplicates()
+    {
+        physim::Projectile projectile;
+        physim::Environment environment;
+        physim::Simulation simulation{environment, projectile};
+
+        environment.gravity = GRAVITY;
+        environment.airResistanceEnabled = false;
+        projectile.setIntegrationMethod(physim::IntegrationMethod::RungeKutta4);
+        projectile.getInitialSpeed() = 50.0f;
+        projectile.getLaunchAngle() = 45.0f;
+        simulation.setPhysicsTimeStep(1.0f);
+
+        simulation.start();
+        runSimulationUntilStopped(simulation, 16, 1.0f);
+        simulation.reset();
+
+        const auto &firstHistory = simulation.getLaunchHistory();
+        const bool firstArchiveValid = expectTrue(firstHistory.size() == 1, "First reset should archive one launch", static_cast<double>(firstHistory.size())) &&
+                                       expectTrue(simulation.getTrajectoryPoints().empty(), "Current trajectory should be cleared after reset", static_cast<double>(simulation.getTrajectoryPoints().size())) &&
+                                       expectTrue(firstHistory.front().landed, "Archived launch should be marked as landed", firstHistory.front().landed ? 1.0 : 0.0);
+
+        simulation.start();
+        runSimulationUntilStopped(simulation, 16, 1.0f);
+        simulation.reset();
+
+        const auto &duplicateHistory = simulation.getLaunchHistory();
+        const bool duplicateArchiveValid = expectTrue(duplicateHistory.size() == 1, "Duplicate configuration should not be archived twice", static_cast<double>(duplicateHistory.size()));
+
+        projectile.getLaunchAngle() = 35.0f;
+        simulation.start();
+        runSimulationUntilStopped(simulation, 16, 1.0f);
+        simulation.reset();
+
+        const auto &secondUniqueHistory = simulation.getLaunchHistory();
+        if (secondUniqueHistory.size() != 2)
+        {
+            std::cerr << "Unique configuration was not archived\n";
+            return false;
+        }
+
+        const physim::TrajectoryStyle &firstStyle = secondUniqueHistory[0].style;
+        const physim::TrajectoryStyle &secondStyle = secondUniqueHistory[1].style;
+        const bool stylesDiffer = (firstStyle.r != secondStyle.r) ||
+                                  (firstStyle.g != secondStyle.g) ||
+                                  (firstStyle.b != secondStyle.b) ||
+                                  (firstStyle.a != secondStyle.a);
+
+        return firstArchiveValid &&
+               duplicateArchiveValid &&
+               expectTrue(stylesDiffer, "Unique launches should receive different trajectory colors", stylesDiffer ? 1.0 : 0.0);
+    }
 }
 
 int main()
@@ -166,6 +227,7 @@ int main()
     success = testDefaultDragRangeStaysStableAcrossTimeSteps() && success;
     success = testSimulationTimeStopsAtExactLanding() && success;
     success = testApexPointReportsExpectedHeightAndTime() && success;
+    success = testResetArchivesTrajectoryHistoryAndDeduplicates() && success;
 
     if (!success)
     {

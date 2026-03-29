@@ -79,10 +79,12 @@ namespace physim
         BeginDrawing();
         ClearBackground(physim::colors::CatppuccinMocha); // dark background (Catppuccin Mocha)
 
+        trajectoryRenderer.setHighlightedLaunches(uiMenus.getSelectedHistoryEntryId(), uiMenus.getHoveredHistoryEntryId());
         drawWithCamera();
         drawSimulationOverlay();
 
         uiMenus.parametersSelectionScreen();
+        trajectoryRenderer.setHighlightedLaunches(uiMenus.getSelectedHistoryEntryId(), uiMenus.getHoveredHistoryEntryId());
 
         // Draw mouse reference
         if (!ImGui::GetIO().WantCaptureMouse)

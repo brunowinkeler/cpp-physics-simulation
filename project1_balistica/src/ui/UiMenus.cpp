@@ -5,6 +5,31 @@
 
 #include <algorithm>
 
+namespace
+{
+    ImVec4 toImGuiColor(const physim::TrajectoryStyle &style)
+    {
+        return {
+            style.r / 255.0f,
+            style.g / 255.0f,
+            style.b / 255.0f,
+            style.a / 255.0f,
+        };
+    }
+
+    const char *integrationMethodLabel(physim::IntegrationMethod integrationMethod)
+    {
+        switch (integrationMethod)
+        {
+        case physim::IntegrationMethod::SymplecticEuler:
+            return "Symplectic Euler";
+        case physim::IntegrationMethod::RungeKutta4:
+        default:
+            return "Runge-Kutta 4";
+        }
+    }
+}
+
 namespace physim
 {
     namespace
@@ -26,6 +51,7 @@ namespace physim
             "Runge-Kutta 4"};
 
         rlImGuiBegin();
+        hoveredHistoryEntryId = -1;
 
         ImGui::Begin("Simulation Controls");
 
@@ -126,6 +152,107 @@ namespace physim
 
         ImGui::End();
 
+        drawLaunchHistoryWindow();
+
         rlImGuiEnd();
+    }
+
+    void UiMenus::drawLaunchHistoryWindow()
+    {
+        const auto &launchHistory = simulation.getLaunchHistory();
+
+        ImGui::Begin("Launch History");
+
+        if (ImGui::Button("Clear History"))
+        {
+            simulation.clearLaunchHistory();
+            selectedHistoryEntryId = -1;
+            hoveredHistoryEntryId = -1;
+        }
+
+        if (launchHistory.empty())
+        {
+            ImGui::Spacing();
+            ImGui::TextDisabled("No archived launches yet.");
+            ImGui::End();
+            return;
+        }
+
+        ImGui::Separator();
+        ImGui::Spacing();
+
+        for (const LaunchHistoryEntry &launchHistoryEntry : launchHistory)
+        {
+            ImGui::PushID(launchHistoryEntry.id);
+
+            const bool isSelected = selectedHistoryEntryId == launchHistoryEntry.id;
+            ImGui::ColorButton("##trajectory-color",
+                               toImGuiColor(launchHistoryEntry.style),
+                               ImGuiColorEditFlags_NoTooltip,
+                               {12.0f, 12.0f});
+            if (ImGui::IsItemHovered())
+            {
+                hoveredHistoryEntryId = launchHistoryEntry.id;
+            }
+
+            ImGui::SameLine();
+            ImGuiTreeNodeFlags treeNodeFlags = ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_OpenOnArrow;
+            if (isSelected)
+            {
+                treeNodeFlags |= ImGuiTreeNodeFlags_Selected;
+            }
+
+            const bool isOpen = ImGui::TreeNodeEx(
+                "##launch-history-entry",
+                treeNodeFlags,
+                "Launch %d | %s | range %.2f m | time %.2f s",
+                launchHistoryEntry.id,
+                launchHistoryEntry.landed ? "landed" : "reset",
+                launchHistoryEntry.finalRange,
+                launchHistoryEntry.flightTime);
+
+            if (ImGui::IsItemClicked())
+            {
+                selectedHistoryEntryId = launchHistoryEntry.id;
+            }
+
+            if (ImGui::IsItemHovered())
+            {
+                hoveredHistoryEntryId = launchHistoryEntry.id;
+            }
+
+            if (isOpen)
+            {
+                ImGui::TextDisabled("Projectile");
+                ImGui::BulletText("Speed: %.3f m/s", launchHistoryEntry.configuration.projectile.initialSpeed);
+                ImGui::BulletText("Angle: %.3f deg", launchHistoryEntry.configuration.projectile.launchAngle);
+                ImGui::BulletText("Mass: %.3f kg", launchHistoryEntry.configuration.projectile.mass);
+                ImGui::BulletText("Radius: %.4f m", launchHistoryEntry.configuration.projectile.radius);
+                ImGui::BulletText("Cd: %.3f", launchHistoryEntry.configuration.projectile.dragCoefficient);
+
+                ImGui::TextDisabled("Environment");
+                ImGui::BulletText("Gravity: %.3f m/s^2", launchHistoryEntry.configuration.environment.gravity);
+                ImGui::BulletText("Air Resistance: %s", launchHistoryEntry.configuration.environment.airResistanceEnabled ? "enabled" : "disabled");
+                ImGui::BulletText("Air Density: %.3f kg/m^3", launchHistoryEntry.configuration.environment.airDensity);
+
+                ImGui::TextDisabled("Simulation");
+                ImGui::BulletText("Method: %s", integrationMethodLabel(launchHistoryEntry.configuration.simulation.integrationMethod));
+                ImGui::BulletText("Physics dt: %.4f s", launchHistoryEntry.configuration.simulation.physicsTimeStep);
+
+                if (launchHistoryEntry.trajectory.getApexPoint().has_value())
+                {
+                    const TrajectoryPoint apexPoint = *launchHistoryEntry.trajectory.getApexPoint();
+                    ImGui::TextDisabled("Apex");
+                    ImGui::BulletText("Height: %.3f m", apexPoint.y);
+                    ImGui::BulletText("Time: %.3f s", apexPoint.time);
+                }
+
+                ImGui::TreePop();
+            }
+
+            ImGui::PopID();
+        }
+
+        ImGui::End();
     }
 }
