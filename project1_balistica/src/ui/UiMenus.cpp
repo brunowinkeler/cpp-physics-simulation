@@ -160,6 +160,7 @@ namespace physim
     void UiMenus::drawLaunchHistoryWindow()
     {
         const auto &launchHistory = simulation.getLaunchHistory();
+        std::optional<int> pendingDeletedLaunchId;
 
         ImGui::Begin("Launch History");
 
@@ -247,10 +248,30 @@ namespace physim
                     ImGui::BulletText("Time: %.3f s", apexPoint.time);
                 }
 
+                if (ImGui::SmallButton("Delete This Launch"))
+                {
+                    pendingDeletedLaunchId = launchHistoryEntry.id;
+                }
+
                 ImGui::TreePop();
             }
 
             ImGui::PopID();
+        }
+
+        if (pendingDeletedLaunchId.has_value())
+        {
+            simulation.removeLaunchHistoryEntry(*pendingDeletedLaunchId);
+
+            if (selectedHistoryEntryId == *pendingDeletedLaunchId)
+            {
+                selectedHistoryEntryId = -1;
+            }
+
+            if (hoveredHistoryEntryId == *pendingDeletedLaunchId)
+            {
+                hoveredHistoryEntryId = -1;
+            }
         }
 
         ImGui::End();

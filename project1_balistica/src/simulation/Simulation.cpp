@@ -116,6 +116,19 @@ namespace physim
         nextTrajectoryStyleIndex = 0;
     }
 
+    void Simulation::removeLaunchHistoryEntry(int launchId)
+    {
+        launchHistory.erase(
+            std::remove_if(
+                launchHistory.begin(),
+                launchHistory.end(),
+                [launchId](const LaunchHistoryEntry &launchHistoryEntry)
+                {
+                    return launchHistoryEntry.id == launchId;
+                }),
+            launchHistory.end());
+    }
+
     void Simulation::setPhysicsTimeStep(float timeStep)
     {
         timeStepPhysics = std::max(timeStep, 0.0001f);

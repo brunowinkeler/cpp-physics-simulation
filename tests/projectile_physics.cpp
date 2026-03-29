@@ -213,9 +213,22 @@ namespace
                                   (firstStyle.b != secondStyle.b) ||
                                   (firstStyle.a != secondStyle.a);
 
+        const int removedLaunchId = secondUniqueHistory.front().id;
+        const int remainingLaunchId = secondUniqueHistory.back().id;
+        simulation.removeLaunchHistoryEntry(removedLaunchId);
+
+        const auto &historyAfterSingleRemoval = simulation.getLaunchHistory();
+        const bool singleRemovalValid = expectTrue(historyAfterSingleRemoval.size() == 1, "Deleting one archived launch should keep the others", static_cast<double>(historyAfterSingleRemoval.size())) &&
+                                        expectTrue(historyAfterSingleRemoval.front().id == remainingLaunchId, "Wrong launch remained after single deletion", static_cast<double>(historyAfterSingleRemoval.front().id));
+
+        simulation.clearLaunchHistory();
+        const bool clearHistoryValid = expectTrue(simulation.getLaunchHistory().empty(), "Clear history should remove all archived launches", static_cast<double>(simulation.getLaunchHistory().size()));
+
         return firstArchiveValid &&
                duplicateArchiveValid &&
-               expectTrue(stylesDiffer, "Unique launches should receive different trajectory colors", stylesDiffer ? 1.0 : 0.0);
+               expectTrue(stylesDiffer, "Unique launches should receive different trajectory colors", stylesDiffer ? 1.0 : 0.0) &&
+               singleRemovalValid &&
+               clearHistoryValid;
     }
 }
 

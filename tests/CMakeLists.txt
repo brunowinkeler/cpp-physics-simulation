@@ -11,6 +11,7 @@ add_executable(ProjectilePhysicsTests
     projectile_physics.cpp
     ${CMAKE_SOURCE_DIR}/project1_balistica/src/physics/Projectile.cpp
     ${CMAKE_SOURCE_DIR}/project1_balistica/src/simulation/Simulation.cpp
+    ${CMAKE_SOURCE_DIR}/project1_balistica/src/simulation/TrajectoryRecorder.cpp
 )
 
 # rlImGui needs to be compiled alongside ImGui headers

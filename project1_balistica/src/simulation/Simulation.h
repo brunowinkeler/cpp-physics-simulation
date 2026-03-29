@@ -76,6 +76,7 @@ namespace physim
         const std::vector<LaunchHistoryEntry> &getLaunchHistory() const { return launchHistory; }
         TrajectoryStyle getCurrentTrajectoryStyle() const { return currentTrajectoryStyle; }
         void clearLaunchHistory();
+        void removeLaunchHistoryEntry(int launchId);
 
         float getTimeGlobal() const { return timeGlobal; }
         float getPhysicsTimeStep() const { return timeStepPhysics; }

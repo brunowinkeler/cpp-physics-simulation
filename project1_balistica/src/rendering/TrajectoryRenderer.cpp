@@ -2,9 +2,11 @@
 
 #include "core/RaylibDefinitions.h"
 
+#include "imgui.h"
 #include "raylib.h"
 
 #include <algorithm>
+#include <limits>
 
 #include "ProjectileCoordinatesAdapter.h"
 
@@ -12,6 +14,9 @@ namespace physim
 {
     namespace
     {
+        constexpr int CURRENT_TRAJECTORY_ID = -1;
+        constexpr int NO_TRAJECTORY_ID = 0;
+        constexpr float HOVER_DISTANCE_TOLERANCE = 8.0f;
         constexpr float BASE_TRAJECTORY_THICKNESS = 1.75f;
         constexpr float SELECTED_TRAJECTORY_THICKNESS = 2.75f;
         constexpr float HOVERED_TRAJECTORY_THICKNESS = 3.25f;
@@ -110,6 +115,35 @@ namespace physim
             return {apexScreenPosition.x + labelOffsetX, apexScreenPosition.y + labelOffsetY};
         }
 
+        float distancePointToSegmentSquared(Vector2 point, Vector2 segmentStart, Vector2 segmentEnd)
+        {
+            const Vector2 segment = {segmentEnd.x - segmentStart.x, segmentEnd.y - segmentStart.y};
+            const Vector2 startToPoint = {point.x - segmentStart.x, point.y - segmentStart.y};
+            const float segmentLengthSquared = (segment.x * segment.x) + (segment.y * segment.y);
+
+            if (segmentLengthSquared <= 0.0f)
+            {
+                return (startToPoint.x * startToPoint.x) + (startToPoint.y * startToPoint.y);
+            }
+
+            const float projection = std::clamp(
+                ((startToPoint.x * segment.x) + (startToPoint.y * segment.y)) / segmentLengthSquared,
+                0.0f,
+                1.0f);
+            const Vector2 closestPoint = {
+                segmentStart.x + (segment.x * projection),
+                segmentStart.y + (segment.y * projection),
+            };
+            const Vector2 pointOffset = {point.x - closestPoint.x, point.y - closestPoint.y};
+            return (pointOffset.x * pointOffset.x) + (pointOffset.y * pointOffset.y);
+        }
+
+        Vector2 trajectoryPointToScreenPosition(const TrajectoryPoint &trajectoryPoint, const Camera2D &camera2D)
+        {
+            const Position worldPosition = ProjectileCoordinatesAdapter::toScreenCoordinates({trajectoryPoint.x, trajectoryPoint.y});
+            return GetWorldToScreen2D({worldPosition.x, worldPosition.y}, camera2D);
+        }
+
         void drawDashedVerticalLine(float x, float startY, float endY, float thickness, Color color)
         {
             const float topY = std::min(startY, endY);
@@ -123,13 +157,70 @@ namespace physim
         }
     }
 
-    void TrajectoryRenderer::render() const
+    void TrajectoryRenderer::render(const Camera2D &camera2D) const
     {
-        renderHistoricalTrajectories();
-        renderCurrentTrajectory();
+        const int hoveredTrajectoryId = resolveHoveredTrajectoryId(camera2D);
+        renderHistoricalTrajectories(hoveredTrajectoryId);
+        renderCurrentTrajectory(hoveredTrajectoryId);
     }
 
-    void TrajectoryRenderer::renderHistoricalTrajectories() const
+    int TrajectoryRenderer::resolveHoveredTrajectoryId(const Camera2D &camera2D) const
+    {
+        if (ImGui::GetIO().WantCaptureMouse)
+        {
+            return NO_TRAJECTORY_ID;
+        }
+
+        float closestDistanceSquared = HOVER_DISTANCE_TOLERANCE * HOVER_DISTANCE_TOLERANCE;
+        int hoveredTrajectoryId = NO_TRAJECTORY_ID;
+
+        for (const LaunchHistoryEntry &launchHistoryEntry : simulation.getLaunchHistory())
+        {
+            const float distanceSquared = calculateTrajectoryHoverDistanceSquared(
+                launchHistoryEntry.trajectory.getPoints(),
+                camera2D);
+            if (distanceSquared < closestDistanceSquared)
+            {
+                closestDistanceSquared = distanceSquared;
+                hoveredTrajectoryId = launchHistoryEntry.id;
+            }
+        }
+
+        const float currentDistanceSquared = calculateTrajectoryHoverDistanceSquared(
+            simulation.getTrajectoryPoints(),
+            camera2D);
+        if (currentDistanceSquared < closestDistanceSquared)
+        {
+            hoveredTrajectoryId = CURRENT_TRAJECTORY_ID;
+        }
+
+        return hoveredTrajectoryId;
+    }
+
+    float TrajectoryRenderer::calculateTrajectoryHoverDistanceSquared(const std::vector<TrajectoryPoint> &trajectoryPoints,
+                                                                      const Camera2D &camera2D) const
+    {
+        if (trajectoryPoints.size() < 2)
+        {
+            return std::numeric_limits<float>::max();
+        }
+
+        const Vector2 mousePosition = GetMousePosition();
+        float closestDistanceSquared = std::numeric_limits<float>::max();
+
+        for (std::size_t index = 1; index < trajectoryPoints.size(); ++index)
+        {
+            const Vector2 segmentStart = trajectoryPointToScreenPosition(trajectoryPoints[index - 1], camera2D);
+            const Vector2 segmentEnd = trajectoryPointToScreenPosition(trajectoryPoints[index], camera2D);
+            closestDistanceSquared = std::min(
+                closestDistanceSquared,
+                distancePointToSegmentSquared(mousePosition, segmentStart, segmentEnd));
+        }
+
+        return closestDistanceSquared;
+    }
+
+    void TrajectoryRenderer::renderHistoricalTrajectories(int hoveredTrajectoryId) const
     {
         const auto &launchHistory = simulation.getLaunchHistory();
         for (int pass = 0; pass < 2; ++pass)
@@ -137,7 +228,8 @@ namespace physim
             for (std::size_t index = 0; index < launchHistory.size(); ++index)
             {
                 const LaunchHistoryEntry &launchHistoryEntry = launchHistory[index];
-                const int emphasisLevel = (launchHistoryEntry.id == hoveredLaunchId) ? 2 : (launchHistoryEntry.id == selectedLaunchId ? 1 : 0);
+                const bool isViewportHovered = launchHistoryEntry.id == hoveredTrajectoryId;
+                const int emphasisLevel = (isViewportHovered || (launchHistoryEntry.id == hoveredLaunchId)) ? 2 : (launchHistoryEntry.id == selectedLaunchId ? 1 : 0);
                 const bool shouldRenderInCurrentPass = (pass == 0) ? (emphasisLevel == 0) : (emphasisLevel > 0);
                 if (!shouldRenderInCurrentPass)
                 {
@@ -148,33 +240,33 @@ namespace physim
                     launchHistoryEntry.trajectory.getPoints(),
                     launchHistoryEntry.trajectory.getApexPoint(),
                     launchHistoryEntry.finalRange,
-                    launchHistoryEntry.landed,
                     launchHistoryEntry.style,
                     static_cast<int>(index),
-                    emphasisLevel);
+                    emphasisLevel,
+                    isViewportHovered);
             }
         }
     }
 
-    void TrajectoryRenderer::renderCurrentTrajectory() const
+    void TrajectoryRenderer::renderCurrentTrajectory(int hoveredTrajectoryId) const
     {
         renderTrajectoryRecord(
             simulation.getTrajectoryPoints(),
             simulation.getApexPoint(),
             projectile.getPosition().x,
-            projectile.isLanded(),
             simulation.getCurrentTrajectoryStyle(),
             static_cast<int>(simulation.getLaunchHistory().size()),
-            0);
+            hoveredTrajectoryId == CURRENT_TRAJECTORY_ID ? 2 : 0,
+            hoveredTrajectoryId == CURRENT_TRAJECTORY_ID);
     }
 
     void TrajectoryRenderer::renderTrajectoryRecord(const std::vector<TrajectoryPoint> &trajectoryPoints,
                                                     const std::optional<TrajectoryPoint> &apexPoint,
                                                     float finalRange,
-                                                    bool landed,
                                                     const TrajectoryStyle &style,
                                                     int labelLane,
-                                                    int emphasisLevel) const
+                                                    int emphasisLevel,
+                                                    bool showLabels) const
     {
         if (trajectoryPoints.empty())
         {
@@ -182,13 +274,8 @@ namespace physim
         }
 
         drawTrajectoryPath(trajectoryPoints, style, emphasisLevel);
-        drawApexMarker(apexPoint, style, labelLane, emphasisLevel);
-        drawFinalRangeMarker(finalRange, style, labelLane, emphasisLevel);
-
-        if (!landed)
-        {
-            return;
-        }
+        drawApexMarker(apexPoint, style, labelLane, emphasisLevel, showLabels);
+        drawFinalRangeMarker(finalRange, style, labelLane, emphasisLevel, showLabels);
     }
 
     void TrajectoryRenderer::drawTrajectoryPath(const std::vector<TrajectoryPoint> &trajectoryPoints,
@@ -215,7 +302,8 @@ namespace physim
     void TrajectoryRenderer::drawApexMarker(const std::optional<TrajectoryPoint> &apexPoint,
                                             const TrajectoryStyle &style,
                                             int labelLane,
-                                            int emphasisLevel) const
+                                            int emphasisLevel,
+                                            bool showLabels) const
     {
         if (!apexPoint.has_value())
         {
@@ -233,6 +321,11 @@ namespace physim
                                resolveApexGuideThickness(emphasisLevel),
                                guideColor);
         DrawCircleLinesV({apexScreenPosition.x, apexScreenPosition.y}, resolveApexMarkerRadius(emphasisLevel), apexColor);
+
+        if (!showLabels)
+        {
+            return;
+        }
 
         const Vector2 labelPosition = resolveApexLabelPosition(apexScreenPosition, labelLane);
         DrawTextEx(GetFontDefault(),
@@ -252,7 +345,8 @@ namespace physim
     void TrajectoryRenderer::drawFinalRangeMarker(float finalRange,
                                                   const TrajectoryStyle &style,
                                                   int labelLane,
-                                                  int emphasisLevel) const
+                                                  int emphasisLevel,
+                                                  bool showLabel) const
     {
         if (finalRange <= 0.0f)
         {
@@ -279,6 +373,11 @@ namespace physim
                    {landingGroundPosition.x, landingLinePosition.y + RANGE_TICK_HALF_HEIGHT},
                    lineThickness,
                    rangeColor);
+
+        if (!showLabel)
+        {
+            return;
+        }
 
         const char *rangeLabel = TextFormat("range = %.2f m", finalRange);
         const Vector2 labelSize = MeasureTextEx(GetFontDefault(), rangeLabel, FONT_SIZE, FONT_SPACING);

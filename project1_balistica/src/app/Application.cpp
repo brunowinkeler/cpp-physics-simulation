@@ -17,9 +17,8 @@ namespace physim
         const int screenW = 1280;
         const int screenH = 720;
 
-        SetConfigFlags(FLAG_WINDOW_MAXIMIZED | FLAG_VSYNC_HINT | FLAG_WINDOW_RESIZABLE);
+        SetConfigFlags(FLAG_WINDOW_MAXIMIZED | FLAG_WINDOW_RESIZABLE);
         InitWindow(screenW, screenH, APP_TITLE);
-        SetTargetFPS(60);   // Fix the frame rate to 60 FPS, for now
         rlImGuiSetup(true); // dark theme
     }
 
@@ -54,7 +53,7 @@ namespace physim
     {
         BeginMode2D(camera.getCamera2D());
         backgroundRenderer.render();
-        trajectoryRenderer.render();
+        trajectoryRenderer.render(camera.getCamera2D());
         projectileRenderer.render();
         EndMode2D();
     }
