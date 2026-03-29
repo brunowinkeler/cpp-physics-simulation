@@ -58,6 +58,14 @@ namespace physim
         TrajectoryStyle style;
     };
 
+    enum class SimulationState
+    {
+        Idle = 0,
+        Running,
+        Paused,
+        Landed
+    };
+
     class Simulation
     {
     public:
@@ -68,9 +76,13 @@ namespace physim
         void update(float timeStep);
         void reset();
 
-        bool isRunning() const { return running; }
-        Projectile getProjectile() const;
-        Environment getEnvironment() const;
+        SimulationState getState() const { return state; }
+        bool isIdle() const { return state == SimulationState::Idle; }
+        bool isRunning() const { return state == SimulationState::Running; }
+        bool isPaused() const { return state == SimulationState::Paused; }
+        bool hasLanded() const { return state == SimulationState::Landed; }
+        const Projectile &getProjectile() const { return projectile; }
+        const Environment &getEnvironment() const { return environment; }
         const std::vector<TrajectoryPoint> &getTrajectoryPoints() const { return trajectoryRecorder.getPoints(); }
         std::optional<TrajectoryPoint> getApexPoint() const { return trajectoryRecorder.getApexPoint(); }
         const std::vector<LaunchHistoryEntry> &getLaunchHistory() const { return launchHistory; }
@@ -101,7 +113,7 @@ namespace physim
         int nextHistoryEntryId{1};
         std::size_t nextTrajectoryStyleIndex{0};
 
-        bool running{false};
+        SimulationState state{SimulationState::Idle};
     };
 }
 

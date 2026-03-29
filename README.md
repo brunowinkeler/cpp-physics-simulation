@@ -14,6 +14,12 @@ Progressive physics simulations in C++20 — from projectile launch to SPH fluid
 Dependencies are downloaded and built automatically by CMake using
 `FetchContent` — no manual installation required.
 
+## Current Projectile Module
+
+- Supported integration methods: Runge-Kutta 4 and Symplectic Euler.
+- Simulation states: Idle, Running, Paused, and Landed.
+- Launch parameters are intended to be edited before launch and after reset.
+
 ---
 
 ## Prerequisites (cross-compile Linux → Windows)

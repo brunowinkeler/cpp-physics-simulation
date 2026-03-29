@@ -110,7 +110,36 @@ namespace physim
         }
     }
 
+    const char *integrationMethodLabel(IntegrationMethod method)
+    {
+        switch (method)
+        {
+        case IntegrationMethod::SymplecticEuler:
+            return "Symplectic Euler";
+        case IntegrationMethod::RungeKutta4:
+        default:
+            return "Runge-Kutta 4";
+        }
+    }
+
+    bool isSupportedIntegrationMethod(IntegrationMethod method)
+    {
+        switch (method)
+        {
+        case IntegrationMethod::SymplecticEuler:
+        case IntegrationMethod::RungeKutta4:
+            return true;
+        default:
+            return false;
+        }
+    }
+
     Projectile::Projectile() = default;
+
+    void Projectile::setIntegrationMethod(IntegrationMethod method)
+    {
+        integrationMethod = isSupportedIntegrationMethod(method) ? method : DEFAULT_INTEGRATION_METHOD;
+    }
 
     float Projectile::getCurrentSpeed() const
     {

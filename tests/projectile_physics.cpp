@@ -42,6 +42,11 @@ namespace
         return false;
     }
 
+    bool expectState(physim::SimulationState actual, physim::SimulationState expected, const char *label)
+    {
+        return expectTrue(actual == expected, label, static_cast<double>(static_cast<int>(actual)));
+    }
+
     double simulateRange(physim::Projectile projectile, physim::Environment environment,
                          float timeStep)
     {
@@ -101,6 +106,31 @@ namespace
                expectTrue(fineRange > 25.0, "Default drag range should remain well above a few meters", fineRange);
     }
 
+    bool testSymplecticEulerRangeRemainsSupported()
+    {
+        physim::Projectile symplecticProjectile;
+        physim::Projectile rk4Projectile;
+        physim::Environment environment;
+
+        environment.gravity = GRAVITY;
+        environment.airResistanceEnabled = false;
+
+        symplecticProjectile.setIntegrationMethod(physim::IntegrationMethod::SymplecticEuler);
+        symplecticProjectile.getInitialSpeed() = 50.0f;
+        symplecticProjectile.getLaunchAngle() = 45.0f;
+
+        rk4Projectile.setIntegrationMethod(physim::IntegrationMethod::RungeKutta4);
+        rk4Projectile.getInitialSpeed() = 50.0f;
+        rk4Projectile.getLaunchAngle() = 45.0f;
+
+        const double expectedRange = (50.0 * 50.0) / GRAVITY;
+        const double symplecticRange = simulateRange(symplecticProjectile, environment, 0.001f);
+        const double rk4Range = simulateRange(rk4Projectile, environment, 0.001f);
+
+        return expectNear(symplecticRange, expectedRange, 0.35, "Vacuum Symplectic Euler range") &&
+               expectNear(symplecticRange, rk4Range, 0.1, "Supported integrators should stay aligned for the same launch");
+    }
+
     bool testSimulationTimeStopsAtExactLanding()
     {
         physim::Projectile projectile;
@@ -128,6 +158,58 @@ namespace
         return expectTrue(projectile.isLanded(), "Projectile should have landed during simulation time test", landingTime) &&
                expectNear(landingTime, expectedFlightTime, 0.02, "Simulation landing time") &&
                expectNear(simulation.getTimeGlobal(), landingTime, 0.0001, "Simulation time should stop after landing");
+    }
+
+    bool testSimulationStateTransitions()
+    {
+        physim::Projectile projectile;
+        physim::Environment environment;
+        physim::Simulation simulation{environment, projectile};
+
+        environment.gravity = GRAVITY;
+        environment.airResistanceEnabled = false;
+        projectile.setIntegrationMethod(physim::IntegrationMethod::RungeKutta4);
+        projectile.getInitialSpeed() = 50.0f;
+        projectile.getLaunchAngle() = 45.0f;
+        simulation.setPhysicsTimeStep(1.0f);
+
+        const bool idleStateValid = expectState(simulation.getState(), physim::SimulationState::Idle, "Simulation should start idle");
+
+        simulation.start();
+        const bool runningStateValid = expectState(simulation.getState(), physim::SimulationState::Running, "Simulation should enter running state after start");
+
+        simulation.stop();
+        const bool pausedStateValid = expectState(simulation.getState(), physim::SimulationState::Paused, "Simulation should enter paused state after stop");
+
+        simulation.start();
+        const bool resumedStateValid = expectState(simulation.getState(), physim::SimulationState::Running, "Simulation should resume from paused state");
+
+        runSimulationUntilStopped(simulation, 16, 1.0f);
+        const bool landedStateValid = expectState(simulation.getState(), physim::SimulationState::Landed, "Simulation should enter landed state after impact");
+
+        simulation.reset();
+        const bool resetStateValid = expectState(simulation.getState(), physim::SimulationState::Idle, "Reset should return simulation to idle state");
+
+        return idleStateValid &&
+               runningStateValid &&
+               pausedStateValid &&
+               resumedStateValid &&
+               landedStateValid &&
+               resetStateValid;
+    }
+
+    bool testSimulationAccessorsExposeConstViews()
+    {
+        physim::Projectile projectile;
+        physim::Environment environment;
+        physim::Simulation simulation{environment, projectile};
+
+        return expectTrue(&simulation.getProjectile() == &projectile,
+                          "Simulation projectile accessor should expose the original projectile",
+                          (&simulation.getProjectile() == &projectile) ? 1.0 : 0.0) &&
+               expectTrue(&simulation.getEnvironment() == &environment,
+                          "Simulation environment accessor should expose the original environment",
+                          (&simulation.getEnvironment() == &environment) ? 1.0 : 0.0);
     }
 
     bool testApexPointReportsExpectedHeightAndTime()
@@ -185,7 +267,10 @@ namespace
         const auto &firstHistory = simulation.getLaunchHistory();
         const bool firstArchiveValid = expectTrue(firstHistory.size() == 1, "First reset should archive one launch", static_cast<double>(firstHistory.size())) &&
                                        expectTrue(simulation.getTrajectoryPoints().empty(), "Current trajectory should be cleared after reset", static_cast<double>(simulation.getTrajectoryPoints().size())) &&
-                                       expectTrue(firstHistory.front().landed, "Archived launch should be marked as landed", firstHistory.front().landed ? 1.0 : 0.0);
+                                       expectTrue(firstHistory.front().landed, "Archived launch should be marked as landed", firstHistory.front().landed ? 1.0 : 0.0) &&
+                                       expectTrue(firstHistory.front().configuration.simulation.integrationMethod == physim::IntegrationMethod::RungeKutta4,
+                                                  "Archived launch should preserve the selected integration method",
+                                                  static_cast<double>(static_cast<int>(firstHistory.front().configuration.simulation.integrationMethod)));
 
         simulation.start();
         runSimulationUntilStopped(simulation, 16, 1.0f);
@@ -238,7 +323,10 @@ int main()
 
     success = testVacuumRangeUsesInterpolatedImpact() && success;
     success = testDefaultDragRangeStaysStableAcrossTimeSteps() && success;
+    success = testSymplecticEulerRangeRemainsSupported() && success;
     success = testSimulationTimeStopsAtExactLanding() && success;
+    success = testSimulationStateTransitions() && success;
+    success = testSimulationAccessorsExposeConstViews() && success;
     success = testApexPointReportsExpectedHeightAndTime() && success;
     success = testResetArchivesTrajectoryHistoryAndDeduplicates() && success;
 

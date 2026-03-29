@@ -1,9 +1,7 @@
 #include "Simulation.h"
 
-#include "raylib.h"
-
-#include <array>
 #include <algorithm>
+#include <array>
 #include <cmath>
 
 namespace physim
@@ -48,39 +46,50 @@ namespace physim
 
     void Simulation::start()
     {
-        if (projectile.isLanded())
+        if (state == SimulationState::Running || state == SimulationState::Landed)
         {
             return;
         }
 
-        running = true;
-        if (!projectile.isLaunched())
+        if (projectile.isLanded())
+        {
+            state = SimulationState::Landed;
+            return;
+        }
+
+        if (state == SimulationState::Idle)
         {
             activeLaunchConfiguration = buildCurrentLaunchConfiguration();
             currentTrajectoryStyle = resolveTrajectoryStyle(*activeLaunchConfiguration);
             trajectoryRecorder.clear();
+            timePerFrame = 0.0f;
             projectile.launch();
             trajectoryRecorder.record(projectile.getPosition().x, projectile.getPosition().y,
                                       timeGlobal,
                                       projectile.getCurrentSpeed());
         }
+
+        state = SimulationState::Running;
     }
 
     void Simulation::stop()
     {
-        running = false;
+        if (state == SimulationState::Running)
+        {
+            state = projectile.isLanded() ? SimulationState::Landed : SimulationState::Paused;
+        }
     }
 
     void Simulation::update(float timeStep)
     {
-        if (!running || timeStep <= 0.0f)
+        if (state != SimulationState::Running || timeStep <= 0.0f)
         {
             return;
         }
 
         timePerFrame += timeStep;
 
-        while (running && timePerFrame >= timeStepPhysics)
+        while (state == SimulationState::Running && timePerFrame >= timeStepPhysics)
         {
             projectile.update(timeStepPhysics, environment);
             timeGlobal += projectile.getLastUpdateDuration();
@@ -92,7 +101,7 @@ namespace physim
 
             if (projectile.isLanded())
             {
-                running = false;
+                state = SimulationState::Landed;
                 timePerFrame = 0.0f;
             }
         }
@@ -105,7 +114,7 @@ namespace physim
         trajectoryRecorder.clear();
         timePerFrame = 0.0f;
         timeGlobal = 0.0f;
-        running = false;
+        state = SimulationState::Idle;
         activeLaunchConfiguration.reset();
     }
 
@@ -134,16 +143,6 @@ namespace physim
         timeStepPhysics = std::max(timeStep, 0.0001f);
     }
 
-    Projectile Simulation::getProjectile() const
-    {
-        return projectile;
-    }
-
-    Environment Simulation::getEnvironment() const
-    {
-        return environment;
-    }
-
     void Simulation::archiveCurrentLaunch()
     {
         if (!activeLaunchConfiguration.has_value() || trajectoryRecorder.getPoints().size() < 2)
@@ -162,7 +161,7 @@ namespace physim
             trajectoryRecorder,
             timeGlobal,
             trajectoryRecorder.getPoints().back().x,
-            projectile.isLanded(),
+            state == SimulationState::Landed,
             currentTrajectoryStyle,
         });
     }

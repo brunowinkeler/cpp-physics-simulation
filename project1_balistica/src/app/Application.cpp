@@ -64,9 +64,21 @@ namespace physim
         constexpr float FONT_SIZE = 18.0f;
         constexpr float FONT_SPACING = 2.0f;
 
-        const char *timeText = projectile.isLanded()
-                                   ? TextFormat("Flight Time: %.3f s", simulation.getTimeGlobal())
-                                   : TextFormat("Simulation Time: %.3f s", simulation.getTimeGlobal());
+        const char *timeText = nullptr;
+        switch (simulation.getState())
+        {
+        case SimulationState::Landed:
+            timeText = TextFormat("Flight Time: %.3f s", simulation.getTimeGlobal());
+            break;
+        case SimulationState::Paused:
+            timeText = TextFormat("Paused Time: %.3f s", simulation.getTimeGlobal());
+            break;
+        case SimulationState::Idle:
+        case SimulationState::Running:
+        default:
+            timeText = TextFormat("Simulation Time: %.3f s", simulation.getTimeGlobal());
+            break;
+        }
         const Vector2 textSize = MeasureTextEx(GetFontDefault(), timeText, FONT_SIZE, FONT_SPACING);
         const Vector2 textPosition = {static_cast<float>(GetScreenWidth()) - textSize.x - MARGIN, MARGIN};
 

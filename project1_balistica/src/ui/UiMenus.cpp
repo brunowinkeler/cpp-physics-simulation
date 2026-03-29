@@ -17,15 +17,20 @@ namespace
         };
     }
 
-    const char *integrationMethodLabel(physim::IntegrationMethod integrationMethod)
+    const char *simulationStateLabel(physim::SimulationState simulationState)
     {
-        switch (integrationMethod)
+        switch (simulationState)
         {
-        case physim::IntegrationMethod::SymplecticEuler:
-            return "Symplectic Euler";
-        case physim::IntegrationMethod::RungeKutta4:
+        case physim::SimulationState::Idle:
+            return "Idle";
+        case physim::SimulationState::Running:
+            return "Running";
+        case physim::SimulationState::Paused:
+            return "Paused";
+        case physim::SimulationState::Landed:
+            return "Landed";
         default:
-            return "Runge-Kutta 4";
+            return "Unknown";
         }
     }
 }
@@ -46,16 +51,19 @@ namespace physim
 
     void UiMenus::parametersSelectionScreen()
     {
-        constexpr const char *integrationMethods[] = {
-            "Symplectic Euler",
-            "Runge-Kutta 4"};
+        const char *integrationMethods[] = {
+            integrationMethodLabel(IntegrationMethod::SymplecticEuler),
+            integrationMethodLabel(IntegrationMethod::RungeKutta4)};
 
         rlImGuiBegin();
         hoveredHistoryEntryId = -1;
 
         ImGui::Begin("Simulation Controls");
 
+        const SimulationState simulationState = simulation.getState();
+
         ImGui::TextDisabled("Projectile Parameters");
+        ImGui::BeginDisabled(simulationState != SimulationState::Idle);
         ImGui::InputFloat("Initial Velocity (m/s)", &projectile.getInitialSpeed(), 0.1f, 100.f, "%.1f");
         ImGui::InputFloat("Launch Angle (degrees)", &projectile.getLaunchAngle(), 0.1f, 90.f, "%.1f");
         ImGui::InputFloat("Mass (kg)", &projectile.getMass(), 0.01f, 0.1f, "%.3f");
@@ -83,6 +91,7 @@ namespace physim
         {
             simulation.setPhysicsTimeStep(physicsTimeStep);
         }
+        ImGui::EndDisabled();
 
         projectile.getInitialSpeed() = std::max(projectile.getInitialSpeed(), 0.0f);
         projectile.getMass() = std::max(projectile.getMass(), MIN_PROJECTILE_MASS);
@@ -95,30 +104,31 @@ namespace physim
         ImGui::Separator();
         ImGui::Spacing();
         ImGui::TextDisabled("Simulation Status");
+        ImGui::Text("State: %s", simulationStateLabel(simulationState));
         ImGui::Text("Simulation Time: %.3f s", simulation.getTimeGlobal());
 
         const float horizontalRange = projectile.getPosition().x;
         const std::optional<TrajectoryPoint> apexPoint = simulation.getApexPoint();
 
-        if (projectile.isLanded())
+        switch (simulationState)
         {
+        case SimulationState::Landed:
             ImGui::Text("Flight Time: %.3f s", simulation.getTimeGlobal());
             ImGui::Text("Final Range: %.3f m", horizontalRange);
-        }
-        else if (simulation.isRunning())
-        {
+            break;
+        case SimulationState::Running:
             ImGui::Text("Flight Time: in progress");
             ImGui::Text("Current Range: %.3f m", horizontalRange);
-        }
-        else if (projectile.isLaunched())
-        {
+            break;
+        case SimulationState::Paused:
             ImGui::Text("Flight Time: paused at %.3f s", simulation.getTimeGlobal());
             ImGui::Text("Current Range: %.3f m", horizontalRange);
-        }
-        else
-        {
+            break;
+        case SimulationState::Idle:
+        default:
             ImGui::Text("Flight Time: waiting for launch");
             ImGui::Text("Current Range: %.3f m", horizontalRange);
+            break;
         }
 
         if (apexPoint.has_value())
@@ -126,7 +136,7 @@ namespace physim
             ImGui::Text("Apex Height: %.3f m", apexPoint->y);
             ImGui::Text("Time To Apex: %.3f s", apexPoint->time);
         }
-        else if (projectile.isLaunched())
+        else if (simulationState == SimulationState::Running || simulationState == SimulationState::Paused)
         {
             ImGui::Text("Apex Height: waiting");
             ImGui::Text("Time To Apex: waiting");
@@ -135,19 +145,28 @@ namespace physim
         ImGui::Separator();
         ImGui::Spacing();
         ImGui::TextDisabled("Controls");
-        if (ImGui::Button("Start"))
+        ImGui::BeginDisabled(simulationState == SimulationState::Running || simulationState == SimulationState::Landed);
+        if (ImGui::Button(simulationState == SimulationState::Paused ? "Resume" : "Start"))
         {
             simulation.start();
         }
+        ImGui::EndDisabled();
         ImGui::SameLine();
+        ImGui::BeginDisabled(simulationState != SimulationState::Running);
         if (ImGui::Button("Stop"))
         {
             simulation.stop();
         }
+        ImGui::EndDisabled();
         ImGui::SameLine();
         if (ImGui::Button("Reset"))
         {
             simulation.reset();
+        }
+
+        if (simulationState != SimulationState::Idle)
+        {
+            ImGui::TextDisabled("Reset to edit launch parameters.");
         }
 
         ImGui::End();
