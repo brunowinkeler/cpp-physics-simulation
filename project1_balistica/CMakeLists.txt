@@ -1,20 +1,35 @@
 set(EXECUTABLE_NAME "Project1_Balistica")
 
-file(GLOB_RECURSE BALISTICA_SOURCE_FILES
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/*.h"
-    "${CMAKE_SOURCE_DIR}/core/*.cpp"
-    "${CMAKE_SOURCE_DIR}/core/*.h"
+set(PROJECT1_BALISTICA_SOURCES
+    src/main.cpp
+    src/app/Application.cpp
+    src/physics/Projectile.cpp
+    src/rendering/BackgroundRenderer.cpp
+    src/rendering/Camera.cpp
+    src/rendering/ProjectileCoordinatesAdapter.cpp
+    src/rendering/ProjectileRenderer.cpp
+    src/rendering/SimulationOverlayRenderer.cpp
+    src/rendering/SimulationSceneRenderer.cpp
+    src/rendering/TrajectoryRenderer.cpp
+    src/simulation/Simulation.cpp
+    src/simulation/TrajectoryRecorder.cpp
+    src/ui/UiMenus.cpp
 )
 
 add_executable(${EXECUTABLE_NAME}
-    ${BALISTICA_SOURCE_FILES}
+    ${PROJECT1_BALISTICA_SOURCES}
 )
 
 # rlImGui needs to be compiled alongside ImGui headers
 target_sources(${EXECUTABLE_NAME} PRIVATE
     ${rlimgui_SOURCE_DIR}/rlImGui.cpp
 )
+
+if(MSVC)
+    set_source_files_properties(${rlimgui_SOURCE_DIR}/rlImGui.cpp PROPERTIES COMPILE_OPTIONS "/w")
+else()
+    set_source_files_properties(${rlimgui_SOURCE_DIR}/rlImGui.cpp PROPERTIES COMPILE_OPTIONS "-w")
+endif()
 
 target_include_directories(${EXECUTABLE_NAME} PRIVATE
     ${rlimgui_SOURCE_DIR}
@@ -30,14 +45,5 @@ target_link_libraries(${EXECUTABLE_NAME} PRIVATE
     glm::glm
 )
 
-# ---------------------------------------------------------------------------
-# Windows-specific settings
-# ---------------------------------------------------------------------------
-if(WIN32 OR CMAKE_SYSTEM_NAME STREQUAL "Windows")
-    # Link Windows system libs needed by Raylib
-    target_link_libraries(${EXECUTABLE_NAME} PRIVATE
-        winmm
-        gdi32
-        opengl32
-    )
-endif()
+physim_apply_target_defaults(${EXECUTABLE_NAME})
+physim_link_platform_libraries(${EXECUTABLE_NAME})

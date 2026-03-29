@@ -40,7 +40,7 @@ add_library(imgui STATIC
 target_include_directories(imgui PUBLIC ${imgui_SOURCE_DIR})
 
 # ---------------------------------------------------------------------------
-# rlImGui (main branch)
+# rlImGui pinned to the revision currently validated by this project
 # Bridge between Raylib and Dear ImGui — only rlImGui.h / rlImGui.cpp
 # Source files are added directly to the executable in the root CMakeLists.txt
 # so they can access includes from both raylib and imgui.
@@ -48,7 +48,7 @@ target_include_directories(imgui PUBLIC ${imgui_SOURCE_DIR})
 FetchContent_Declare(
     rlimgui
     GIT_REPOSITORY https://github.com/raylib-extras/rlImGui.git
-    GIT_TAG        main
+    GIT_TAG        286e11acd6c785004c9550c7ed3762add2ae3d47
     GIT_SHALLOW    TRUE
 )
 FetchContent_MakeAvailable(rlimgui)

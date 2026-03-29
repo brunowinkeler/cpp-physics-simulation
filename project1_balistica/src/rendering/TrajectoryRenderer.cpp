@@ -107,12 +107,12 @@ namespace physim
             return emphasisLevel > 0 ? EMPHASIZED_RANGE_LINE_THICKNESS : BASE_RANGE_LINE_THICKNESS;
         }
 
-        Vector2 resolveApexLabelPosition(const Position &apexScreenPosition, int labelLane)
+        Vector2 resolveApexLabelPosition(const Vector2 &apexRenderPosition, int labelLane)
         {
             const float labelOffsetX = BASE_LABEL_OFFSET_X + (LABEL_OFFSET_X_SPACING * static_cast<float>(labelLane % 3));
             const float labelOffsetY = BASE_LABEL_OFFSET_Y - (LABEL_OFFSET_Y_SPACING * static_cast<float>(labelLane % 4));
 
-            return {apexScreenPosition.x + labelOffsetX, apexScreenPosition.y + labelOffsetY};
+            return {apexRenderPosition.x + labelOffsetX, apexRenderPosition.y + labelOffsetY};
         }
 
         float distancePointToSegmentSquared(Vector2 point, Vector2 segmentStart, Vector2 segmentEnd)
@@ -136,12 +136,6 @@ namespace physim
             };
             const Vector2 pointOffset = {point.x - closestPoint.x, point.y - closestPoint.y};
             return (pointOffset.x * pointOffset.x) + (pointOffset.y * pointOffset.y);
-        }
-
-        Vector2 trajectoryPointToScreenPosition(const TrajectoryPoint &trajectoryPoint, const Camera2D &camera2D)
-        {
-            const Position worldPosition = ProjectileCoordinatesAdapter::toScreenCoordinates({trajectoryPoint.x, trajectoryPoint.y});
-            return GetWorldToScreen2D({worldPosition.x, worldPosition.y}, camera2D);
         }
 
         void drawDashedVerticalLine(float x, float startY, float endY, float thickness, Color color)
@@ -210,8 +204,8 @@ namespace physim
 
         for (std::size_t index = 1; index < trajectoryPoints.size(); ++index)
         {
-            const Vector2 segmentStart = trajectoryPointToScreenPosition(trajectoryPoints[index - 1], camera2D);
-            const Vector2 segmentEnd = trajectoryPointToScreenPosition(trajectoryPoints[index], camera2D);
+            const Vector2 segmentStart = ProjectileCoordinatesAdapter::toScreenPosition(trajectoryPoints[index - 1].x, trajectoryPoints[index - 1].y, camera2D);
+            const Vector2 segmentEnd = ProjectileCoordinatesAdapter::toScreenPosition(trajectoryPoints[index].x, trajectoryPoints[index].y, camera2D);
             closestDistanceSquared = std::min(
                 closestDistanceSquared,
                 distancePointToSegmentSquared(mousePosition, segmentStart, segmentEnd));
@@ -292,10 +286,10 @@ namespace physim
 
         for (std::size_t index = 1; index < trajectoryPoints.size(); ++index)
         {
-            const Position startPoint = ProjectileCoordinatesAdapter::toScreenCoordinates({trajectoryPoints[index - 1].x, trajectoryPoints[index - 1].y});
-            const Position endPoint = ProjectileCoordinatesAdapter::toScreenCoordinates({trajectoryPoints[index].x, trajectoryPoints[index].y});
+            const Vector2 startPoint = ProjectileCoordinatesAdapter::toRenderPosition(trajectoryPoints[index - 1].x, trajectoryPoints[index - 1].y);
+            const Vector2 endPoint = ProjectileCoordinatesAdapter::toRenderPosition(trajectoryPoints[index].x, trajectoryPoints[index].y);
 
-            DrawLineEx({startPoint.x, startPoint.y}, {endPoint.x, endPoint.y}, lineThickness, trajectoryColor);
+            DrawLineEx(startPoint, endPoint, lineThickness, trajectoryColor);
         }
     }
 
@@ -310,24 +304,24 @@ namespace physim
             return;
         }
 
-        const Position apexScreenPosition = ProjectileCoordinatesAdapter::toScreenCoordinates({apexPoint->x, apexPoint->y});
-        const Position groundScreenPosition = ProjectileCoordinatesAdapter::toScreenCoordinates({apexPoint->x, 0.0f});
+        const Vector2 apexRenderPosition = ProjectileCoordinatesAdapter::toRenderPosition(apexPoint->x, apexPoint->y);
+        const Vector2 groundRenderPosition = ProjectileCoordinatesAdapter::toRenderPosition(apexPoint->x, 0.0f);
         const Color apexColor = toRaylibColor(style, resolveAlpha(style, emphasisLevel));
         const Color guideColor = toRaylibColor(style, static_cast<unsigned char>(std::min<int>(255, resolveAlpha(style, emphasisLevel) - 40)));
 
-        drawDashedVerticalLine(apexScreenPosition.x,
-                               apexScreenPosition.y,
-                               groundScreenPosition.y,
+        drawDashedVerticalLine(apexRenderPosition.x,
+                               apexRenderPosition.y,
+                               groundRenderPosition.y,
                                resolveApexGuideThickness(emphasisLevel),
                                guideColor);
-        DrawCircleLinesV({apexScreenPosition.x, apexScreenPosition.y}, resolveApexMarkerRadius(emphasisLevel), apexColor);
+        DrawCircleLinesV(apexRenderPosition, resolveApexMarkerRadius(emphasisLevel), apexColor);
 
         if (!showLabels)
         {
             return;
         }
 
-        const Vector2 labelPosition = resolveApexLabelPosition(apexScreenPosition, labelLane);
+        const Vector2 labelPosition = resolveApexLabelPosition(apexRenderPosition, labelLane);
         DrawTextEx(GetFontDefault(),
                    TextFormat("h = %.2f m", apexPoint->y),
                    labelPosition,
@@ -354,19 +348,19 @@ namespace physim
         }
 
         const float rangeLineY = resolveRangeLineY(labelLane);
-        const Position launchLinePosition = ProjectileCoordinatesAdapter::toScreenCoordinates({0.0f, rangeLineY});
-        const Position landingLinePosition = ProjectileCoordinatesAdapter::toScreenCoordinates({finalRange, rangeLineY});
-        const Position launchGroundPosition = ProjectileCoordinatesAdapter::toScreenCoordinates({0.0f, 0.0f});
-        const Position landingGroundPosition = ProjectileCoordinatesAdapter::toScreenCoordinates({finalRange, 0.0f});
+        const Vector2 launchLinePosition = ProjectileCoordinatesAdapter::toRenderPosition(0.0f, rangeLineY);
+        const Vector2 landingLinePosition = ProjectileCoordinatesAdapter::toRenderPosition(finalRange, rangeLineY);
+        const Vector2 launchGroundPosition = ProjectileCoordinatesAdapter::toRenderPosition(0.0f, 0.0f);
+        const Vector2 landingGroundPosition = ProjectileCoordinatesAdapter::toRenderPosition(finalRange, 0.0f);
         const Color rangeColor = toRaylibColor(style, resolveAlpha(style, emphasisLevel));
         const float lineThickness = resolveRangeLineThickness(emphasisLevel);
 
-        DrawLineEx({launchLinePosition.x, launchLinePosition.y},
-                   {landingLinePosition.x, landingLinePosition.y},
+        DrawLineEx(launchLinePosition,
+               landingLinePosition,
                    lineThickness,
                    rangeColor);
         DrawLineEx({launchGroundPosition.x, launchGroundPosition.y - RANGE_TICK_HALF_HEIGHT},
-                   {launchGroundPosition.x, launchLinePosition.y + RANGE_TICK_HALF_HEIGHT},
+               {launchGroundPosition.x, launchLinePosition.y + RANGE_TICK_HALF_HEIGHT},
                    lineThickness,
                    rangeColor);
         DrawLineEx({landingGroundPosition.x, landingGroundPosition.y - RANGE_TICK_HALF_HEIGHT},

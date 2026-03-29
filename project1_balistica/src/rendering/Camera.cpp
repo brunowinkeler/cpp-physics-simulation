@@ -1,7 +1,9 @@
 #include "Camera.h"
 
 #include "imgui.h"
-#include "raymath.h"
+
+#include <algorithm>
+#include <cmath>
 
 namespace physim
 {
@@ -14,8 +16,10 @@ namespace physim
         if (!ImGui::GetIO().WantCaptureMouse && IsMouseButtonDown(MOUSE_BUTTON_LEFT))
         {
             Vector2 delta = GetMouseDelta();
-            delta = Vector2Scale(delta, -1.0f / camera2D.zoom);
-            camera2D.target = Vector2Add(camera2D.target, delta);
+            delta.x *= -1.0f / camera2D.zoom;
+            delta.y *= -1.0f / camera2D.zoom;
+            camera2D.target.x += delta.x;
+            camera2D.target.y += delta.y;
         }
 
         if (IsKeyPressed(KEY_F))
@@ -32,10 +36,10 @@ namespace physim
             camera2D.target = mouseWorldPos;
 
             float scale = 0.2f * wheel;
-            camera2D.zoom = Clamp(expf(logf(camera2D.zoom) + scale), MIN_ZOOM, MAX_ZOOM);
+            camera2D.zoom = std::clamp(std::exp(std::log(camera2D.zoom) + scale), MIN_ZOOM, MAX_ZOOM);
         }
 
-        camera2D.zoom = Clamp(camera2D.zoom, MIN_ZOOM, MAX_ZOOM);
+        camera2D.zoom = std::clamp(camera2D.zoom, MIN_ZOOM, MAX_ZOOM);
     }
 
     void Camera::reset()

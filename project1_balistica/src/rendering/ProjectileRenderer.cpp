@@ -2,7 +2,6 @@
 #include "core/RaylibDefinitions.h"
 
 #include "raylib.h"
-#include "raymath.h"
 
 #include <algorithm>
 
@@ -18,15 +17,18 @@ namespace physim
 
     void ProjectileRenderer::render()
     {
-        Position projectilePos = projectile.getPosition();
-        Position screenPos = ProjectileCoordinatesAdapter::toScreenCoordinates(projectile.getPosition());
+        const Position projectilePos = projectile.getPosition();
+        Vector2 renderPos = ProjectileCoordinatesAdapter::toRenderPosition(projectilePos);
         float radius = std::max(projectile.getRadius() * RADIUS_SCALE, MIN_SCREEN_RADIUS);
-        screenPos.y -= radius;
-        DrawCircleV({screenPos.x, screenPos.y}, radius, colors::LightPink);
+        renderPos.y -= radius;
+        DrawCircleV(renderPos, radius, colors::LightPink);
+        const Vector2 labelPosition = {
+            renderPos.x + radius + TEXT_OFFSET,
+            renderPos.y - radius - TEXT_OFFSET,
+        };
         DrawTextEx(GetFontDefault(),
                    TextFormat("[%f, %f]", projectilePos.x, projectilePos.y),
-                   Vector2Add((Vector2){screenPos.x, screenPos.y},
-                              (Vector2){radius + TEXT_OFFSET, -radius - TEXT_OFFSET}),
+                   labelPosition,
                    FONT_SIZE, FONT_SPACING,
                    colors::White);
     }

@@ -1,11 +1,13 @@
 #include "BackgroundRenderer.h"
 #include "core/RaylibDefinitions.h"
 
+#include "ProjectileCoordinatesAdapter.h"
+
 namespace physim
 {
     inline constexpr float FLOOR_LEFT = -1000000.0f;
     inline constexpr float FLOOR_WIDTH = 2000000.0f;
-    inline constexpr float FLOOR_HEIGHT = 1000000.0f;
+    inline constexpr float FLOOR_DEPTH = 1000000.0f;
     inline constexpr int MIN_WIDTH_BUILDING = 50;
     inline constexpr int MAX_WIDTH_BUILDING = 150;
     inline constexpr int MIN_HEIGHT_BUILDING = 100;
@@ -22,13 +24,13 @@ namespace physim
         {
             buildings[i].rect = {
                 .x = spacing,
-                .y = static_cast<float>(GetRandomValue(MIN_HEIGHT_BUILDING, MAX_HEIGHT_BUILDING) + Y_GROUND),
+                .y = static_cast<float>(Y_GROUND),
                 .width = static_cast<float>(GetRandomValue(MIN_WIDTH_BUILDING, MAX_WIDTH_BUILDING)),
                 .height = static_cast<float>(GetRandomValue(MIN_HEIGHT_BUILDING, MAX_HEIGHT_BUILDING))};
-            buildings[i].color = (Color){static_cast<unsigned char>(GetRandomValue(50, 200)),
-                                         static_cast<unsigned char>(GetRandomValue(50, 200)),
-                                         static_cast<unsigned char>(GetRandomValue(50, 200)),
-                                         static_cast<unsigned char>(200)}; // alpha
+            buildings[i].color = Color{static_cast<unsigned char>(GetRandomValue(50, 200)),
+                                       static_cast<unsigned char>(GetRandomValue(50, 200)),
+                                       static_cast<unsigned char>(GetRandomValue(50, 200)),
+                                       static_cast<unsigned char>(200)}; // alpha
 
             spacing += buildings[i].rect.width;
         }
@@ -47,7 +49,7 @@ namespace physim
 
     void BackgroundRenderer::drawFloor()
     {
-        Rectangle floorRect = {FLOOR_LEFT, static_cast<float>(Y_GROUND), FLOOR_WIDTH, FLOOR_HEIGHT};
-        DrawRectangleRec(floorRect, colors::DarkGray);
+        const Rectangle floorBounds = {FLOOR_LEFT, -FLOOR_DEPTH, FLOOR_WIDTH, FLOOR_DEPTH};
+        DrawRectangleRec(ProjectileCoordinatesAdapter::toRenderRectangle(floorBounds), colors::DarkGray);
     }
 } // namespace physim

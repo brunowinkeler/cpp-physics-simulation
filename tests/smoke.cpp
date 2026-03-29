@@ -2,12 +2,42 @@
 #include "imgui.h"
 #include "glm/glm.hpp"
 #include "glm/gtc/constants.hpp"
+#include <cstdlib>
 #include <cstdio>
+#include <string_view>
 
 #include "core/RaylibDefinitions.h"
 
-int main()
+namespace
 {
+    bool hasFlag(int argc, char **argv, std::string_view flag)
+    {
+        for (int index = 1; index < argc; ++index)
+        {
+            if (argv[index] == flag)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    bool hasGraphicalDisplay()
+    {
+        return std::getenv("DISPLAY") != nullptr || std::getenv("WAYLAND_DISPLAY") != nullptr;
+    }
+}
+
+int main(int argc, char **argv)
+{
+    const bool automatedSmokeRun = hasFlag(argc, argv, "--ctest");
+    if (automatedSmokeRun && !hasGraphicalDisplay())
+    {
+        std::puts("SmokeTests skipped: no graphical display available.");
+        return 0;
+    }
+
     const int screenW = 1280;
     const int screenH = 720;
 
@@ -19,6 +49,7 @@ int main()
     float gravity = 9.81f;
     float timeScale = 1.0f;
     bool showDemo = false;
+    int remainingAutomatedFrames = automatedSmokeRun ? 3 : -1;
 
     glm::vec2 origin{static_cast<float>(screenW) / 2.f,
                      static_cast<float>(screenH) / 2.f};
@@ -75,6 +106,15 @@ int main()
         DrawFPS(20, GetScreenHeight() - 26);
 
         EndDrawing();
+
+        if (automatedSmokeRun)
+        {
+            --remainingAutomatedFrames;
+            if (remainingAutomatedFrames <= 0)
+            {
+                break;
+            }
+        }
     }
 
     rlImGuiShutdown();

@@ -8,7 +8,7 @@ Progressive physics simulations in C++20 — from projectile launch to SPH fluid
 |---|---:|---:|
 | Rendering / Window / Input | [Raylib](https://www.raylib.com/) | 5.5 |
 | Real-time GUI (sliders, buttons) | [Dear ImGui](https://github.com/ocornut/imgui) | 1.92.6 |
-| Bridge Raylib ↔ ImGui | [rlImGui](https://github.com/raylib-extras/rlImGui) | main |
+| Bridge Raylib ↔ ImGui | [rlImGui](https://github.com/raylib-extras/rlImGui) | 286e11a |
 | Vector / matrix math | [GLM](https://github.com/g-truc/glm) | 1.0.1 |
 
 Dependencies are downloaded and built automatically by CMake using

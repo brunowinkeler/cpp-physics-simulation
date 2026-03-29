@@ -9,6 +9,8 @@ project(PhysicsSimulation
     LANGUAGES C CXX
 )
 
+include(CTest)
+
 # ---------------------------------------------------------------------------
 # C++ Standard
 # ---------------------------------------------------------------------------
@@ -23,6 +25,8 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
+include(cmake/project-options.cmake)
+
 # ---------------------------------------------------------------------------
 # Dependencies (Raylib, ImGui, rlImGui, GLM)
 # Store FetchContent downloads outside the build tree so that deleting
@@ -33,5 +37,7 @@ set(FETCHCONTENT_BASE_DIR "${CMAKE_SOURCE_DIR}/external" CACHE PATH "" FORCE)
 set(FETCHCONTENT_UPDATES_DISCONNECTED ON CACHE BOOL "" FORCE)
 include(cmake/deps.cmake)
 
-add_subdirectory(tests)
+if(BUILD_TESTING)
+    add_subdirectory(tests)
+endif()
 add_subdirectory(project1_balistica)

@@ -19,6 +19,12 @@ target_sources(${EXECUTABLE_NAME} PRIVATE
     ${rlimgui_SOURCE_DIR}/rlImGui.cpp
 )
 
+if(MSVC)
+    set_source_files_properties(${rlimgui_SOURCE_DIR}/rlImGui.cpp PROPERTIES COMPILE_OPTIONS "/w")
+else()
+    set_source_files_properties(${rlimgui_SOURCE_DIR}/rlImGui.cpp PROPERTIES COMPILE_OPTIONS "-w")
+endif()
+
 target_include_directories(${EXECUTABLE_NAME} PRIVATE
     ${rlimgui_SOURCE_DIR}
     ${imgui_SOURCE_DIR}
@@ -31,29 +37,29 @@ target_link_libraries(${EXECUTABLE_NAME} PRIVATE
     glm::glm
 )
 
+physim_apply_target_defaults(${EXECUTABLE_NAME})
+
 target_include_directories(ProjectilePhysicsTests PRIVATE
     ${CMAKE_SOURCE_DIR}
     ${CMAKE_SOURCE_DIR}/project1_balistica/src
 )
 
-target_link_libraries(ProjectilePhysicsTests PRIVATE
-    raylib
-)
+physim_apply_target_defaults(ProjectilePhysicsTests)
 
-# ---------------------------------------------------------------------------
-# Windows-specific settings
-# ---------------------------------------------------------------------------
-if(WIN32 OR CMAKE_SYSTEM_NAME STREQUAL "Windows")
-    # Link Windows system libs needed by Raylib
-    target_link_libraries(${EXECUTABLE_NAME} PRIVATE
-        winmm
-        gdi32
-        opengl32
+if(BUILD_TESTING)
+    add_test(NAME projectile_physics_domain COMMAND ProjectilePhysicsTests)
+    set_tests_properties(projectile_physics_domain PROPERTIES
+        LABELS "domain;physics"
+        TIMEOUT 15
     )
 
-    target_link_libraries(ProjectilePhysicsTests PRIVATE
-        winmm
-        gdi32
-        opengl32
+    add_test(NAME smoke_graphics COMMAND SmokeTests --ctest)
+    set_tests_properties(smoke_graphics PROPERTIES
+        ENVIRONMENT "ASAN_OPTIONS=detect_leaks=0"
+        LABELS "graphics;smoke"
+        RUN_SERIAL TRUE
+        TIMEOUT 15
     )
 endif()
+
+physim_link_platform_libraries(${EXECUTABLE_NAME})

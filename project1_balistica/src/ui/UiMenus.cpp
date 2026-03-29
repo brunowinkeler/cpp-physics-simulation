@@ -40,8 +40,19 @@ namespace physim
     namespace
     {
         constexpr float MIN_PROJECTILE_MASS = 0.001f;
+        constexpr float MAX_PROJECTILE_MASS = 100.0f;
         constexpr float MIN_PROJECTILE_RADIUS = 0.001f;
+        constexpr float MAX_PROJECTILE_RADIUS = 1.0f;
+        constexpr float MAX_INITIAL_SPEED = 500.0f;
+        constexpr float MIN_LAUNCH_ANGLE = 0.0f;
+        constexpr float MAX_LAUNCH_ANGLE = 89.9f;
+        constexpr float MAX_DRAG_COEFFICIENT = 3.0f;
+        constexpr float MAX_GRAVITY = 50.0f;
+        constexpr float MAX_AIR_DENSITY = 5.0f;
         constexpr float MIN_TIME_SCALE = 0.1f;
+        constexpr float MAX_TIME_SCALE = 20.0f;
+        constexpr float MIN_PHYSICS_TIME_STEP = 0.0001f;
+        constexpr float MAX_PHYSICS_TIME_STEP = 0.1f;
     }
 
     UiMenus::UiMenus(Environment &env, Projectile &proj, Simulation &sim)
@@ -61,26 +72,44 @@ namespace physim
         ImGui::Begin("Simulation Controls");
 
         const SimulationState simulationState = simulation.getState();
+        const bool isIdle = simulationState == SimulationState::Idle;
+        const bool dragTrajectoryControlsEnabled = isIdle && environment.airResistanceEnabled;
 
         ImGui::TextDisabled("Projectile Parameters");
-        ImGui::BeginDisabled(simulationState != SimulationState::Idle);
+        ImGui::BeginDisabled(!isIdle);
         ImGui::InputFloat("Initial Velocity (m/s)", &projectile.getInitialSpeed(), 0.1f, 100.f, "%.1f");
         ImGui::InputFloat("Launch Angle (degrees)", &projectile.getLaunchAngle(), 0.1f, 90.f, "%.1f");
-        ImGui::InputFloat("Mass (kg)", &projectile.getMass(), 0.01f, 0.1f, "%.3f");
         ImGui::InputFloat("Radius (m)", &projectile.getRadius(), 0.001f, 0.01f, "%.4f");
+        ImGui::EndDisabled();
+
+        ImGui::Separator();
+        ImGui::Spacing();
+        ImGui::TextDisabled("Drag Model");
+        ImGui::BeginDisabled(!isIdle);
+        ImGui::Checkbox("Enable Air Resistance", &environment.airResistanceEnabled);
+        ImGui::EndDisabled();
+        ImGui::BeginDisabled(!dragTrajectoryControlsEnabled);
+        ImGui::InputFloat("Mass (kg)", &projectile.getMass(), 0.01f, 0.1f, "%.3f");
         ImGui::InputFloat("Drag Coefficient", &projectile.getDragCoefficient(), 0.01f, 0.1f, "%.3f");
+        ImGui::InputFloat("Air Density (kg/m^3)", &environment.airDensity, 0.01f, 2.0f, "%.2f");
+        ImGui::EndDisabled();
+        if (!environment.airResistanceEnabled)
+        {
+            ImGui::TextDisabled("Mass, drag coefficient and air density affect the flight only when air resistance is enabled.");
+        }
+
         ImGui::Separator();
         ImGui::Spacing();
         ImGui::TextDisabled("Environment Parameters");
+        ImGui::BeginDisabled(!isIdle);
         ImGui::InputFloat("Gravity (m/s^2)", &environment.gravity, 0.1f, 30.f, "%.2f");
-        ImGui::Checkbox("Enable Air Resistance", &environment.airResistanceEnabled);
-        ImGui::BeginDisabled(!environment.airResistanceEnabled);
-        ImGui::InputFloat("Air Density (kg/m^3)", &environment.airDensity, 0.01f, 2.0f, "%.2f");
         ImGui::EndDisabled();
+
         ImGui::Separator();
         ImGui::Spacing();
         ImGui::TextDisabled("Simulation Parameters");
         ImGui::InputFloat("Time Scale", &environment.timeScale, 0.001f, 5.f, "%.4fx");
+        ImGui::BeginDisabled(!isIdle);
         int integrationMethodIndex = static_cast<int>(projectile.getIntegrationMethod());
         if (ImGui::Combo("Integration Method", &integrationMethodIndex, integrationMethods, IM_ARRAYSIZE(integrationMethods)))
         {
@@ -89,17 +118,18 @@ namespace physim
         float physicsTimeStep = simulation.getPhysicsTimeStep();
         if (ImGui::InputFloat("Physics Time Step (s)", &physicsTimeStep, 0.0001f, 0.001f, "%.4f"))
         {
-            simulation.setPhysicsTimeStep(physicsTimeStep);
+            simulation.setPhysicsTimeStep(std::clamp(physicsTimeStep, MIN_PHYSICS_TIME_STEP, MAX_PHYSICS_TIME_STEP));
         }
         ImGui::EndDisabled();
 
-        projectile.getInitialSpeed() = std::max(projectile.getInitialSpeed(), 0.0f);
-        projectile.getMass() = std::max(projectile.getMass(), MIN_PROJECTILE_MASS);
-        projectile.getRadius() = std::max(projectile.getRadius(), MIN_PROJECTILE_RADIUS);
-        projectile.getDragCoefficient() = std::max(projectile.getDragCoefficient(), 0.0f);
-        environment.gravity = std::max(environment.gravity, 0.0f);
-        environment.airDensity = std::max(environment.airDensity, 0.0f);
-        environment.timeScale = std::max(environment.timeScale, MIN_TIME_SCALE);
+        projectile.getInitialSpeed() = std::clamp(projectile.getInitialSpeed(), 0.0f, MAX_INITIAL_SPEED);
+        projectile.getLaunchAngle() = std::clamp(projectile.getLaunchAngle(), MIN_LAUNCH_ANGLE, MAX_LAUNCH_ANGLE);
+        projectile.getMass() = std::clamp(projectile.getMass(), MIN_PROJECTILE_MASS, MAX_PROJECTILE_MASS);
+        projectile.getRadius() = std::clamp(projectile.getRadius(), MIN_PROJECTILE_RADIUS, MAX_PROJECTILE_RADIUS);
+        projectile.getDragCoefficient() = std::clamp(projectile.getDragCoefficient(), 0.0f, MAX_DRAG_COEFFICIENT);
+        environment.gravity = std::clamp(environment.gravity, 0.0f, MAX_GRAVITY);
+        environment.airDensity = std::clamp(environment.airDensity, 0.0f, MAX_AIR_DENSITY);
+        environment.timeScale = std::clamp(environment.timeScale, MIN_TIME_SCALE, MAX_TIME_SCALE);
 
         ImGui::Separator();
         ImGui::Spacing();
