@@ -8,13 +8,12 @@
 
 namespace physim
 {
-    class Simulation;
-    class Projectile;
+    class SimulationSession;
 
     class SimulationSceneRenderer
     {
     public:
-        SimulationSceneRenderer(Simulation &simulation, Projectile &projectile);
+        explicit SimulationSceneRenderer(const SimulationSession &session);
 
         void updateCamera(float frameTime);
         void render();

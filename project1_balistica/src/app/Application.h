@@ -1,12 +1,10 @@
 #ifndef APPLICATION_H
 #define APPLICATION_H
 
-#include "physics/Environment.h"
-#include "physics/Projectile.h"
 #include "rendering/SimulationOverlayRenderer.h"
 #include "rendering/SimulationSceneRenderer.h"
+#include "simulation/SimulationSession.h"
 #include "ui/UiMenus.h"
-#include "simulation/Simulation.h"
 
 namespace physim
 {
@@ -24,13 +22,10 @@ namespace physim
         void draw();
         void syncSceneHighlights();
 
-        Environment environment;
-        Projectile projectile;
-
-        Simulation simulation;
+        SimulationSession session;
         UiMenus uiMenus;
-        SimulationSceneRenderer sceneRenderer{simulation, projectile};
-        SimulationOverlayRenderer overlayRenderer{simulation};
+        SimulationSceneRenderer sceneRenderer;
+        SimulationOverlayRenderer overlayRenderer;
     };
 }
 

@@ -8,12 +8,12 @@ namespace physim
     class ProjectileRenderer
     {
     public:
-        ProjectileRenderer(Projectile &projectile) : projectile{projectile} {};
+        explicit ProjectileRenderer(const Projectile &projectile) : projectile{projectile} {}
 
-        void render();
+        void render() const;
 
     private:
-        Projectile &projectile;
+        const Projectile &projectile;
     };
 
 } // namespace physim

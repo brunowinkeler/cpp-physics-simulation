@@ -15,7 +15,7 @@ namespace physim
     inline constexpr float FONT_SIZE = 14.0f;
     inline constexpr float FONT_SPACING = 2.0f;
 
-    void ProjectileRenderer::render()
+    void ProjectileRenderer::render() const
     {
         const Position projectilePos = projectile.getPosition();
         Vector2 renderPos = ProjectileCoordinatesAdapter::toRenderPosition(projectilePos);

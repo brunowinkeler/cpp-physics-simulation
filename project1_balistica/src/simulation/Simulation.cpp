@@ -66,7 +66,8 @@ namespace physim
             projectile.launch();
             trajectoryRecorder.record(projectile.getPosition().x, projectile.getPosition().y,
                                       timeGlobal,
-                                      projectile.getCurrentSpeed());
+                                      projectile.getCurrentSpeed(),
+                                      true);
         }
 
         state = SimulationState::Running;
@@ -95,11 +96,14 @@ namespace physim
             timeGlobal += projectile.getLastUpdateDuration();
             timePerFrame -= timeStepPhysics;
 
+            const bool landed = projectile.isLanded();
+
             trajectoryRecorder.record(projectile.getPosition().x, projectile.getPosition().y,
                                       timeGlobal,
-                                      projectile.getCurrentSpeed());
+                                      projectile.getCurrentSpeed(),
+                                      landed);
 
-            if (projectile.isLanded())
+            if (landed)
             {
                 state = SimulationState::Landed;
                 timePerFrame = 0.0f;

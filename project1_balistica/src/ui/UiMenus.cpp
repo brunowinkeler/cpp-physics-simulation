@@ -1,5 +1,7 @@
 #include "UiMenus.h"
 
+#include "simulation/SimulationSession.h"
+
 #include "imgui.h"
 #include "rlImGui.h"
 
@@ -55,13 +57,17 @@ namespace physim
         constexpr float MAX_PHYSICS_TIME_STEP = 0.1f;
     }
 
-    UiMenus::UiMenus(Environment &env, Projectile &proj, Simulation &sim)
-        : environment{env}, projectile{proj}, simulation{sim}
+    UiMenus::UiMenus(SimulationSession &session)
+        : session{session}
     {
     }
 
     void UiMenus::parametersSelectionScreen()
     {
+        Environment &environment = session.getEnvironment();
+        Projectile &projectile = session.getProjectile();
+        Simulation &simulation = session.getSimulation();
+
         const char *integrationMethods[] = {
             integrationMethodLabel(IntegrationMethod::SymplecticEuler),
             integrationMethodLabel(IntegrationMethod::RungeKutta4)};
@@ -208,6 +214,7 @@ namespace physim
 
     void UiMenus::drawLaunchHistoryWindow()
     {
+        Simulation &simulation = session.getSimulation();
         const auto &launchHistory = simulation.getLaunchHistory();
         std::optional<int> pendingDeletedLaunchId;
 

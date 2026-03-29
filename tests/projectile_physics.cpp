@@ -2,6 +2,7 @@
 #include "project1_balistica/src/simulation/Simulation.h"
 
 #include <cmath>
+#include <cstddef>
 #include <iostream>
 #include <limits>
 #include <numbers>
@@ -212,6 +213,82 @@ namespace
                           (&simulation.getEnvironment() == &environment) ? 1.0 : 0.0);
     }
 
+    bool testTrajectoryRecorderRetentionPolicyCapsGrowth()
+    {
+        physim::TrajectoryRecorder trajectoryRecorder;
+        const physim::TrajectoryRetentionPolicy retentionPolicy = trajectoryRecorder.getRetentionPolicy();
+        const std::size_t totalSamples = retentionPolicy.maxRecordedPoints * 8;
+        constexpr float sampleTimeStep = 0.001f;
+
+        for (std::size_t index = 0; index < totalSamples; ++index)
+        {
+            const float time = static_cast<float>(index) * sampleTimeStep;
+            const float x = static_cast<float>(index) * 0.25f;
+            const float y = std::sin(time) * 20.0f;
+            const bool forceSample = index == (totalSamples - 1);
+            trajectoryRecorder.record(x, y, time, 10.0f + y, forceSample);
+        }
+
+        const auto &points = trajectoryRecorder.getPoints();
+        bool strictlyIncreasingTime = true;
+        for (std::size_t index = 1; index < points.size(); ++index)
+        {
+            if (points[index].time <= points[index - 1].time)
+            {
+                strictlyIncreasingTime = false;
+                break;
+            }
+        }
+
+        const double expectedFinalTime = static_cast<double>(totalSamples - 1) * sampleTimeStep;
+
+        return expectTrue(points.size() <= retentionPolicy.maxRecordedPoints,
+                          "Trajectory recorder should stay within its configured point budget",
+                          static_cast<double>(points.size())) &&
+               expectTrue(points.size() > 2,
+                          "Trajectory recorder should keep enough samples to draw a curve",
+                          static_cast<double>(points.size())) &&
+               expectNear(points.front().time, 0.0, 1.0e-6, "Trajectory recorder should preserve the first sample") &&
+               expectNear(points.back().time, expectedFinalTime, 1.0e-6, "Trajectory recorder should preserve the latest sample") &&
+               expectTrue(strictlyIncreasingTime,
+                          "Trajectory recorder should keep samples ordered after compaction",
+                          strictlyIncreasingTime ? 1.0 : 0.0);
+    }
+
+    bool testTrajectoryRecorderSamplingAccumulatesAcrossSkippedSteps()
+    {
+        physim::TrajectoryRecorder trajectoryRecorder;
+        const float minRecordedTimeStep = trajectoryRecorder.getRetentionPolicy().minRecordedTimeStep;
+
+        trajectoryRecorder.record(0.0f, 0.0f, 0.0f, 0.0f, true);
+        trajectoryRecorder.record(1.0f, 1.0f, minRecordedTimeStep * 0.45f, 1.0f);
+        const bool firstSkipValid = expectTrue(trajectoryRecorder.getPoints().size() == 1,
+                                               "Trajectory recorder should skip samples below the minimum interval",
+                                               static_cast<double>(trajectoryRecorder.getPoints().size()));
+
+        trajectoryRecorder.record(2.0f, 2.0f, minRecordedTimeStep * 1.10f, 2.0f);
+        const bool firstAppendValid = expectTrue(trajectoryRecorder.getPoints().size() == 2,
+                                                 "Trajectory recorder should append once the minimum interval is reached",
+                                                 static_cast<double>(trajectoryRecorder.getPoints().size()));
+
+        trajectoryRecorder.record(3.0f, 3.0f, minRecordedTimeStep * 1.55f, 3.0f);
+        const bool secondSkipValid = expectTrue(trajectoryRecorder.getPoints().size() == 2,
+                                                "Trajectory recorder should keep the last committed point when skipping",
+                                                static_cast<double>(trajectoryRecorder.getPoints().size()));
+
+        trajectoryRecorder.record(4.0f, 4.0f, minRecordedTimeStep * 2.20f, 4.0f);
+        const auto &points = trajectoryRecorder.getPoints();
+
+        return firstSkipValid &&
+               firstAppendValid &&
+               secondSkipValid &&
+               expectTrue(points.size() == 3,
+                          "Trajectory recorder should accumulate elapsed time across skipped samples",
+                          static_cast<double>(points.size())) &&
+               expectNear(points.back().time, static_cast<double>(minRecordedTimeStep * 2.20f), 1.0e-6,
+                          "Trajectory recorder should append the next eligible sample");
+    }
+
     bool testApexPointReportsExpectedHeightAndTime()
     {
         physim::Projectile projectile;
@@ -327,6 +404,8 @@ int main()
     success = testSimulationTimeStopsAtExactLanding() && success;
     success = testSimulationStateTransitions() && success;
     success = testSimulationAccessorsExposeConstViews() && success;
+    success = testTrajectoryRecorderRetentionPolicyCapsGrowth() && success;
+    success = testTrajectoryRecorderSamplingAccumulatesAcrossSkippedSteps() && success;
     success = testApexPointReportsExpectedHeightAndTime() && success;
     success = testResetArchivesTrajectoryHistoryAndDeduplicates() && success;
 

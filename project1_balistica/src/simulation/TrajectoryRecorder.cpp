@@ -5,9 +5,30 @@
 
 namespace physim
 {
-    void TrajectoryRecorder::record(float x, float y, float time, float speed)
+    void TrajectoryRecorder::record(float x, float y, float time, float speed, bool forceSample)
     {
-        points.push_back({x, y, time, speed});
+        const TrajectoryPoint point{x, y, time, speed};
+
+        if (points.empty())
+        {
+            points.push_back(point);
+            return;
+        }
+
+        TrajectoryPoint &lastPoint = points.back();
+        if (point.time <= lastPoint.time)
+        {
+            lastPoint = point;
+            return;
+        }
+
+        if (!shouldAppendPoint(point, forceSample))
+        {
+            return;
+        }
+
+        points.push_back(point);
+        retainWithinBudget();
     }
 
     void TrajectoryRecorder::clear()
@@ -18,6 +39,47 @@ namespace physim
     const std::vector<TrajectoryPoint> &TrajectoryRecorder::getPoints() const
     {
         return points;
+    }
+
+    void TrajectoryRecorder::retainWithinBudget()
+    {
+        while (points.size() > retentionPolicy.maxRecordedPoints)
+        {
+            compactRecordedPoints();
+        }
+    }
+
+    void TrajectoryRecorder::compactRecordedPoints()
+    {
+        if (points.size() <= 2)
+        {
+            return;
+        }
+
+        std::vector<TrajectoryPoint> compactedPoints;
+        compactedPoints.reserve((points.size() / 2) + 1);
+
+        for (std::size_t index = 0; index < points.size(); index += 2)
+        {
+            compactedPoints.push_back(points[index]);
+        }
+
+        if (compactedPoints.back().time < points.back().time)
+        {
+            compactedPoints.push_back(points.back());
+        }
+
+        points = std::move(compactedPoints);
+    }
+
+    bool TrajectoryRecorder::shouldAppendPoint(const TrajectoryPoint &point, bool forceSample) const
+    {
+        if (forceSample || points.empty())
+        {
+            return true;
+        }
+
+        return (point.time - points.back().time) >= retentionPolicy.minRecordedTimeStep;
     }
 
     std::optional<TrajectoryPoint> TrajectoryRecorder::getApexPoint() const

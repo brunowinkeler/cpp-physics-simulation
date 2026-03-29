@@ -10,7 +10,10 @@ namespace physim
 {
     const char *APP_TITLE{"Physics Simulation — Balistica v1.0"};
 
-    Application::Application() : simulation{environment, projectile}, uiMenus{environment, projectile, simulation}
+    Application::Application()
+        : uiMenus{session},
+          sceneRenderer{session},
+          overlayRenderer{session.getSimulation()}
     {
         const int screenW = 1280;
         const int screenH = 720;
@@ -47,6 +50,8 @@ namespace physim
             return;
         }
 
+        Simulation &simulation = session.getSimulation();
+
         if (IsKeyPressed(KEY_SPACE))
         {
             if (simulation.isRunning())
@@ -67,8 +72,8 @@ namespace physim
 
     void Application::updateSimulation(float frameTime)
     {
-        const float timeStep = frameTime * environment.timeScale; // Scale time step by environment's time scale
-        simulation.update(timeStep);
+        const float timeStep = frameTime * session.getEnvironment().timeScale; // Scale time step by environment's time scale
+        session.getSimulation().update(timeStep);
     }
 
     void Application::syncSceneHighlights()

@@ -1,9 +1,10 @@
 #ifndef UIMENUS_H
 #define UIMENUS_H
 
-#include "physics/Environment.h"
-#include "physics/Projectile.h"
-#include "simulation/Simulation.h"
+namespace physim
+{
+    class SimulationSession;
+}
 
 namespace physim
 {
@@ -11,7 +12,7 @@ namespace physim
     {
     public:
         UiMenus() = delete;
-        UiMenus(Environment &env, Projectile &proj, Simulation &sim);
+        explicit UiMenus(SimulationSession &session);
         void parametersSelectionScreen();
         int getSelectedHistoryEntryId() const { return selectedHistoryEntryId; }
         int getHoveredHistoryEntryId() const { return hoveredHistoryEntryId; }
@@ -19,9 +20,7 @@ namespace physim
     private:
         void drawLaunchHistoryWindow();
 
-        Environment &environment;
-        Projectile &projectile;
-        Simulation &simulation;
+        SimulationSession &session;
         int selectedHistoryEntryId{-1};
         int hoveredHistoryEntryId{-1};
 

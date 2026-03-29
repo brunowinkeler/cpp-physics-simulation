@@ -1,11 +1,15 @@
 #include "SimulationSceneRenderer.h"
 
+#include "simulation/SimulationSession.h"
+
 #include "raylib.h"
 
 namespace physim
 {
-    SimulationSceneRenderer::SimulationSceneRenderer(Simulation &simulation, Projectile &projectile)
-        : backgroundRenderer{}, trajectoryRenderer{simulation, projectile}, projectileRenderer{projectile}
+    SimulationSceneRenderer::SimulationSceneRenderer(const SimulationSession &session)
+        : backgroundRenderer{},
+          trajectoryRenderer{session.getSimulation(), session.getProjectile()},
+          projectileRenderer{session.getProjectile()}
     {
     }
 

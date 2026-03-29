@@ -1,29 +1,17 @@
 #ifndef BACKGROUND_RENDERER_H
 #define BACKGROUND_RENDERER_H
 
-#include <array>
 #include "raylib.h"
 
 namespace physim
 {
-    inline constexpr int MAX_BUILDINGS = 100;
-
-    struct Building
-    {
-        Rectangle rect;
-        Color color;
-    };
-
     class BackgroundRenderer
     {
     public:
-        BackgroundRenderer();
-        void render();
+        void render() const;
 
     private:
-        void drawFloor();
-
-        std::array<Building, MAX_BUILDINGS> buildings;
+        void drawFloor() const;
     };
 } // namespace physim
 
