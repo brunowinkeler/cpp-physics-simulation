@@ -25,6 +25,7 @@ namespace physim
         void updateEvents();
         void draw();
         void drawWithCamera();
+        void drawSimulationOverlay() const;
 
         Environment environment;
         Projectile projectile;

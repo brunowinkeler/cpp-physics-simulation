@@ -68,6 +68,34 @@ namespace physim
 
         ImGui::Separator();
         ImGui::Spacing();
+        ImGui::TextDisabled("Simulation Status");
+        ImGui::Text("Simulation Time: %.3f s", simulation.getTimeGlobal());
+
+        const float horizontalRange = projectile.getPosition().x;
+
+        if (projectile.isLanded())
+        {
+            ImGui::Text("Flight Time: %.3f s", simulation.getTimeGlobal());
+            ImGui::Text("Final Range: %.3f m", horizontalRange);
+        }
+        else if (simulation.isRunning())
+        {
+            ImGui::Text("Flight Time: in progress");
+            ImGui::Text("Current Range: %.3f m", horizontalRange);
+        }
+        else if (projectile.isLaunched())
+        {
+            ImGui::Text("Flight Time: paused at %.3f s", simulation.getTimeGlobal());
+            ImGui::Text("Current Range: %.3f m", horizontalRange);
+        }
+        else
+        {
+            ImGui::Text("Flight Time: waiting for launch");
+            ImGui::Text("Current Range: %.3f m", horizontalRange);
+        }
+
+        ImGui::Separator();
+        ImGui::Spacing();
         ImGui::TextDisabled("Controls");
         if (ImGui::Button("Start"))
         {

@@ -10,6 +10,7 @@ add_executable(${EXECUTABLE_NAME}
 add_executable(ProjectilePhysicsTests
     projectile_physics.cpp
     ${CMAKE_SOURCE_DIR}/project1_balistica/src/physics/Projectile.cpp
+    ${CMAKE_SOURCE_DIR}/project1_balistica/src/simulation/Simulation.cpp
 )
 
 # rlImGui needs to be compiled alongside ImGui headers
@@ -34,12 +35,22 @@ target_include_directories(ProjectilePhysicsTests PRIVATE
     ${CMAKE_SOURCE_DIR}/project1_balistica/src
 )
 
+target_link_libraries(ProjectilePhysicsTests PRIVATE
+    raylib
+)
+
 # ---------------------------------------------------------------------------
 # Windows-specific settings
 # ---------------------------------------------------------------------------
 if(WIN32 OR CMAKE_SYSTEM_NAME STREQUAL "Windows")
     # Link Windows system libs needed by Raylib
     target_link_libraries(${EXECUTABLE_NAME} PRIVATE
+        winmm
+        gdi32
+        opengl32
+    )
+
+    target_link_libraries(ProjectilePhysicsTests PRIVATE
         winmm
         gdi32
         opengl32

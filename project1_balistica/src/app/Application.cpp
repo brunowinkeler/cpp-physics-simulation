@@ -58,12 +58,28 @@ namespace physim
         EndMode2D();
     }
 
+    void Application::drawSimulationOverlay() const
+    {
+        constexpr float MARGIN = 20.0f;
+        constexpr float FONT_SIZE = 18.0f;
+        constexpr float FONT_SPACING = 2.0f;
+
+        const char *timeText = projectile.isLanded()
+                                   ? TextFormat("Flight Time: %.3f s", simulation.getTimeGlobal())
+                                   : TextFormat("Simulation Time: %.3f s", simulation.getTimeGlobal());
+        const Vector2 textSize = MeasureTextEx(GetFontDefault(), timeText, FONT_SIZE, FONT_SPACING);
+        const Vector2 textPosition = {static_cast<float>(GetScreenWidth()) - textSize.x - MARGIN, MARGIN};
+
+        DrawTextEx(GetFontDefault(), timeText, textPosition, FONT_SIZE, FONT_SPACING, colors::White);
+    }
+
     void Application::draw()
     {
         BeginDrawing();
         ClearBackground(physim::colors::CatppuccinMocha); // dark background (Catppuccin Mocha)
 
         drawWithCamera();
+        drawSimulationOverlay();
 
         uiMenus.parametersSelectionScreen();
 

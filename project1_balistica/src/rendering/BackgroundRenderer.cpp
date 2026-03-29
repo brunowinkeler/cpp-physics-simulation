@@ -3,6 +3,9 @@
 
 namespace physim
 {
+    inline constexpr float FLOOR_LEFT = -1000000.0f;
+    inline constexpr float FLOOR_WIDTH = 2000000.0f;
+    inline constexpr float FLOOR_HEIGHT = 1000000.0f;
     inline constexpr int MIN_WIDTH_BUILDING = 50;
     inline constexpr int MAX_WIDTH_BUILDING = 150;
     inline constexpr int MIN_HEIGHT_BUILDING = 100;
@@ -44,7 +47,7 @@ namespace physim
 
     void BackgroundRenderer::drawFloor()
     {
-        Rectangle floorRect = {MIN_X_SCREEN, Y_GROUND, static_cast<float>(MAX_X_SCREEN - MIN_X_SCREEN), 1000.0f};
+        Rectangle floorRect = {FLOOR_LEFT, static_cast<float>(Y_GROUND), FLOOR_WIDTH, FLOOR_HEIGHT};
         DrawRectangleRec(floorRect, colors::DarkGray);
     }
 } // namespace physim

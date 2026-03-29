@@ -17,6 +17,7 @@ namespace physim
         void update(float timeStep);
         void reset();
 
+        bool isRunning() const { return running; }
         Projectile getProjectile() const;
         Environment getEnvironment() const;
 

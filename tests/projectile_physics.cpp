@@ -1,4 +1,5 @@
 #include "project1_balistica/src/physics/Projectile.h"
+#include "project1_balistica/src/simulation/Simulation.h"
 
 #include <cmath>
 #include <iostream>
@@ -91,6 +92,35 @@ namespace
         return expectNear(coarseRange, fineRange, 0.25, "Default drag range stability") &&
                expectTrue(fineRange > 25.0, "Default drag range should remain well above a few meters", fineRange);
     }
+
+    bool testSimulationTimeStopsAtExactLanding()
+    {
+        physim::Projectile projectile;
+        physim::Environment environment;
+        physim::Simulation simulation{environment, projectile};
+
+        environment.gravity = GRAVITY;
+        environment.airResistanceEnabled = false;
+        projectile.setIntegrationMethod(physim::IntegrationMethod::RungeKutta4);
+        projectile.getInitialSpeed() = 50.0f;
+        projectile.getLaunchAngle() = 45.0f;
+        simulation.setPhysicsTimeStep(1.0f);
+        simulation.start();
+
+        for (int step = 0; step < 16 && !projectile.isLanded(); ++step)
+        {
+            simulation.update(1.0f);
+        }
+
+        const double expectedFlightTime = (2.0 * 50.0 * std::sin(45.0 * std::numbers::pi_v<double> / 180.0)) / GRAVITY;
+        const double landingTime = simulation.getTimeGlobal();
+
+        simulation.update(1.0f);
+
+        return expectTrue(projectile.isLanded(), "Projectile should have landed during simulation time test", landingTime) &&
+               expectNear(landingTime, expectedFlightTime, 0.02, "Simulation landing time") &&
+               expectNear(simulation.getTimeGlobal(), landingTime, 0.0001, "Simulation time should stop after landing");
+    }
 }
 
 int main()
@@ -99,6 +129,7 @@ int main()
 
     success = testVacuumRangeUsesInterpolatedImpact() && success;
     success = testDefaultDragRangeStaysStableAcrossTimeSteps() && success;
+    success = testSimulationTimeStopsAtExactLanding() && success;
 
     if (!success)
     {

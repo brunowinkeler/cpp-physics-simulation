@@ -12,10 +12,18 @@ namespace physim
 
     void Simulation::start()
     {
+        if (projectile.isLanded())
+        {
+            return;
+        }
+
         running = true;
         if (!projectile.isLaunched())
         {
             projectile.launch();
+            trajectoryRecorder.record(projectile.getPosition().x, projectile.getPosition().y,
+                                      timeGlobal,
+                                      projectile.getCurrentSpeed());
         }
     }
 
@@ -26,19 +34,27 @@ namespace physim
 
     void Simulation::update(float timeStep)
     {
-        if (running)
+        if (!running || timeStep <= 0.0f)
         {
-            timeGlobal += timeStep;
-            timePerFrame += timeStep;
+            return;
+        }
+
+        timePerFrame += timeStep;
+
+        while (running && timePerFrame >= timeStepPhysics)
+        {
+            projectile.update(timeStepPhysics, environment);
+            timeGlobal += projectile.getLastUpdateDuration();
+            timePerFrame -= timeStepPhysics;
 
             trajectoryRecorder.record(projectile.getPosition().x, projectile.getPosition().y,
                                       timeGlobal,
                                       projectile.getCurrentSpeed());
 
-            while (timePerFrame >= timeStepPhysics)
+            if (projectile.isLanded())
             {
-                projectile.update(timeStepPhysics, environment);
-                timePerFrame -= timeStepPhysics;
+                running = false;
+                timePerFrame = 0.0f;
             }
         }
     }
@@ -46,6 +62,7 @@ namespace physim
     void Simulation::reset()
     {
         projectile.reset();
+        trajectoryRecorder.clear();
         timePerFrame = 0.0f;
         timeGlobal = 0.0f;
         running = false;

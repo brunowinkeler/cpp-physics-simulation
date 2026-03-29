@@ -121,11 +121,13 @@ namespace physim
     {
         if (landed || timeStep <= 0.0f)
         {
+            lastUpdateDuration = 0.0;
             return;
         }
 
         const Scalar effectiveTimeStep = static_cast<Scalar>(timeStep);
         const State previousState = state;
+        lastUpdateDuration = effectiveTimeStep;
 
         switch (integrationMethod)
         {
@@ -140,7 +142,7 @@ namespace physim
 
         if (previousState.y >= 0.0 && state.y < 0.0)
         {
-            resolveLanding(effectiveTimeStep, previousState);
+            lastUpdateDuration = resolveLanding(effectiveTimeStep, previousState);
         }
     }
 
@@ -149,6 +151,7 @@ namespace physim
         const Scalar radianAngle = static_cast<Scalar>(launchAngle) * static_cast<Scalar>(constants::DEG_TO_RAD);
         state.vx = static_cast<Scalar>(initialSpeed) * std::cos(radianAngle);
         state.vy = static_cast<Scalar>(initialSpeed) * std::sin(radianAngle);
+        lastUpdateDuration = 0.0;
         launched = true;
         landed = false;
     }
@@ -156,6 +159,7 @@ namespace physim
     void Projectile::reset()
     {
         state = {0.0, 0.0, 0.0, 0.0};
+        lastUpdateDuration = 0.0;
         launched = false;
         landed = false;
     }
@@ -230,7 +234,7 @@ namespace physim
         state.vy += (timeStep / 6.0) * (k1.dvy + (2.0 * k2.dvy) + (2.0 * k3.dvy) + k4.dvy);
     }
 
-    void Projectile::resolveLanding(double timeStep, const State &previousState)
+    double Projectile::resolveLanding(double timeStep, const State &previousState)
     {
         const Scalar landingFraction = findLandingFraction(previousState, state, timeStep);
         const State landingState = interpolateState(previousState, state, timeStep, landingFraction);
@@ -240,5 +244,7 @@ namespace physim
         state.vx = 0.0;
         state.vy = 0.0;
         landed = true;
+
+        return timeStep * landingFraction;
     }
 } // namespace physim

@@ -53,6 +53,7 @@ namespace physim
         float getDragCoefficient() const { return dragCoefficient; }
         float &getDragCoefficient() { return dragCoefficient; }
         float getCurrentSpeed() const;
+        float getLastUpdateDuration() const { return static_cast<float>(lastUpdateDuration); }
 
         float &getMass() { return mass; }
         float &getInitialSpeed() { return initialSpeed; }
@@ -71,7 +72,7 @@ namespace physim
         Derivative evaluate(const State &state, const Environment &env);
         void updateRK4(double timeStep, const Environment &env);
         void updateSymplecticEuler(double timeStep, const Environment &env);
-        void resolveLanding(double timeStep, const State &previousState);
+        double resolveLanding(double timeStep, const State &previousState);
 
         State state{0.0, 0.0, 0.0, 0.0};
 
@@ -83,6 +84,8 @@ namespace physim
         float launchAngle{45.0f};  // degrees
 
         IntegrationMethod integrationMethod{IntegrationMethod::RungeKutta4};
+
+        double lastUpdateDuration{0.0};
 
         bool launched{false};
         bool landed{false};
