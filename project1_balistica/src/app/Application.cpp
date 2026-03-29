@@ -1,24 +1,22 @@
 #include "Application.h"
+
 #include "core/RaylibDefinitions.h"
-#include "ui/UiMenus.h"
 
 #include "raylib.h"
 #include "rlImGui.h"
-#include "raymath.h"
-
-#include "imgui.h"
 
 namespace physim
 {
     const char *APP_TITLE{"Physics Simulation — Balistica v1.0"};
 
-    Application::Application() : simulation{environment, projectile}, uiMenus{environment, projectile, simulation}, backgroundRenderer{}
+    Application::Application() : simulation{environment, projectile}, uiMenus{environment, projectile, simulation}
     {
         const int screenW = 1280;
         const int screenH = 720;
 
-        SetConfigFlags(FLAG_WINDOW_MAXIMIZED | FLAG_WINDOW_RESIZABLE);
+        SetConfigFlags(FLAG_WINDOW_RESIZABLE);
         InitWindow(screenW, screenH, APP_TITLE);
+        MaximizeWindow();
         rlImGuiSetup(true); // dark theme
     }
 
@@ -32,9 +30,8 @@ namespace physim
     {
         while (!WindowShouldClose())
         {
-            camera.update();
+            sceneRenderer.updateCamera();
             updateSimulation();
-
             draw();
         }
     }
@@ -45,44 +42,9 @@ namespace physim
         simulation.update(timeStep);
     }
 
-    void Application::updateEvents()
+    void Application::syncSceneHighlights()
     {
-    }
-
-    void Application::drawWithCamera()
-    {
-        BeginMode2D(camera.getCamera2D());
-        backgroundRenderer.render();
-        trajectoryRenderer.render(camera.getCamera2D());
-        projectileRenderer.render();
-        EndMode2D();
-    }
-
-    void Application::drawSimulationOverlay() const
-    {
-        constexpr float MARGIN = 20.0f;
-        constexpr float FONT_SIZE = 18.0f;
-        constexpr float FONT_SPACING = 2.0f;
-
-        const char *timeText = nullptr;
-        switch (simulation.getState())
-        {
-        case SimulationState::Landed:
-            timeText = TextFormat("Flight Time: %.3f s", simulation.getTimeGlobal());
-            break;
-        case SimulationState::Paused:
-            timeText = TextFormat("Paused Time: %.3f s", simulation.getTimeGlobal());
-            break;
-        case SimulationState::Idle:
-        case SimulationState::Running:
-        default:
-            timeText = TextFormat("Simulation Time: %.3f s", simulation.getTimeGlobal());
-            break;
-        }
-        const Vector2 textSize = MeasureTextEx(GetFontDefault(), timeText, FONT_SIZE, FONT_SPACING);
-        const Vector2 textPosition = {static_cast<float>(GetScreenWidth()) - textSize.x - MARGIN, MARGIN};
-
-        DrawTextEx(GetFontDefault(), timeText, textPosition, FONT_SIZE, FONT_SPACING, colors::White);
+        sceneRenderer.setHighlightedLaunches(uiMenus.getSelectedHistoryEntryId(), uiMenus.getHoveredHistoryEntryId());
     }
 
     void Application::draw()
@@ -90,21 +52,12 @@ namespace physim
         BeginDrawing();
         ClearBackground(physim::colors::CatppuccinMocha); // dark background (Catppuccin Mocha)
 
-        trajectoryRenderer.setHighlightedLaunches(uiMenus.getSelectedHistoryEntryId(), uiMenus.getHoveredHistoryEntryId());
-        drawWithCamera();
-        drawSimulationOverlay();
+        syncSceneHighlights();
+        sceneRenderer.render();
+        overlayRenderer.render();
 
         uiMenus.parametersSelectionScreen();
-        trajectoryRenderer.setHighlightedLaunches(uiMenus.getSelectedHistoryEntryId(), uiMenus.getHoveredHistoryEntryId());
-
-        // Draw mouse reference
-        if (!ImGui::GetIO().WantCaptureMouse)
-        {
-            DrawCircleV(GetMousePosition(), 2, colors::White);
-            DrawText("Mouse left button drag to move, mouse wheel to zoom", 20, 20, 16, colors::White);
-        }
-
-        DrawFPS(20, GetScreenHeight() - 26);
+        syncSceneHighlights();
         EndDrawing();
     }
 

@@ -2,13 +2,11 @@
 #define APPLICATION_H
 
 #include "physics/Environment.h"
-#include "simulation/Simulation.h"
 #include "physics/Projectile.h"
+#include "rendering/SimulationOverlayRenderer.h"
+#include "rendering/SimulationSceneRenderer.h"
 #include "ui/UiMenus.h"
-#include "rendering/BackgroundRenderer.h"
-#include "rendering/Camera.h"
-#include "rendering/ProjectileRenderer.h"
-#include "rendering/TrajectoryRenderer.h"
+#include "simulation/Simulation.h"
 
 namespace physim
 {
@@ -19,24 +17,19 @@ namespace physim
         ~Application();
 
         void run();
-        void reset();
 
     private:
         void updateSimulation();
-        void updateEvents();
         void draw();
-        void drawWithCamera();
-        void drawSimulationOverlay() const;
+        void syncSceneHighlights();
 
         Environment environment;
         Projectile projectile;
 
         Simulation simulation;
         UiMenus uiMenus;
-        BackgroundRenderer backgroundRenderer;
-        TrajectoryRenderer trajectoryRenderer{simulation, projectile};
-        ProjectileRenderer projectileRenderer{projectile};
-        Camera camera;
+        SimulationSceneRenderer sceneRenderer{simulation, projectile};
+        SimulationOverlayRenderer overlayRenderer{simulation};
     };
 }
 
