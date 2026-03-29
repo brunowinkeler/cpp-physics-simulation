@@ -121,6 +121,41 @@ namespace
                expectNear(landingTime, expectedFlightTime, 0.02, "Simulation landing time") &&
                expectNear(simulation.getTimeGlobal(), landingTime, 0.0001, "Simulation time should stop after landing");
     }
+
+    bool testApexPointReportsExpectedHeightAndTime()
+    {
+        physim::Projectile projectile;
+        physim::Environment environment;
+        physim::Simulation simulation{environment, projectile};
+
+        environment.gravity = GRAVITY;
+        environment.airResistanceEnabled = false;
+        projectile.setIntegrationMethod(physim::IntegrationMethod::RungeKutta4);
+        projectile.getInitialSpeed() = 50.0f;
+        projectile.getLaunchAngle() = 45.0f;
+        simulation.setPhysicsTimeStep(1.0f);
+        simulation.start();
+
+        for (int step = 0; step < 8 && !simulation.getApexPoint().has_value(); ++step)
+        {
+            simulation.update(1.0f);
+        }
+
+        const std::optional<physim::TrajectoryPoint> apexPoint = simulation.getApexPoint();
+        if (!apexPoint.has_value())
+        {
+            std::cerr << "Apex point was not detected\n";
+            return false;
+        }
+
+        const double expectedApexTime = (50.0 * std::sin(45.0 * std::numbers::pi_v<double> / 180.0)) / GRAVITY;
+        const double expectedApexHeight = (50.0 * 50.0 * 0.5) / (2.0 * GRAVITY);
+        const double expectedApexX = 50.0 * std::cos(45.0 * std::numbers::pi_v<double> / 180.0) * expectedApexTime;
+
+        return expectNear(apexPoint->time, expectedApexTime, 0.02, "Apex time") &&
+               expectNear(apexPoint->y, expectedApexHeight, 0.05, "Apex height") &&
+               expectNear(apexPoint->x, expectedApexX, 0.05, "Apex horizontal position");
+    }
 }
 
 int main()
@@ -130,6 +165,7 @@ int main()
     success = testVacuumRangeUsesInterpolatedImpact() && success;
     success = testDefaultDragRangeStaysStableAcrossTimeSteps() && success;
     success = testSimulationTimeStopsAtExactLanding() && success;
+    success = testApexPointReportsExpectedHeightAndTime() && success;
 
     if (!success)
     {

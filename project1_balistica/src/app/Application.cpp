@@ -54,6 +54,7 @@ namespace physim
     {
         BeginMode2D(camera.getCamera2D());
         backgroundRenderer.render();
+        trajectoryRenderer.render();
         projectileRenderer.render();
         EndMode2D();
     }

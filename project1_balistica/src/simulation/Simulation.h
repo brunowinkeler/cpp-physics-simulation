@@ -20,6 +20,8 @@ namespace physim
         bool isRunning() const { return running; }
         Projectile getProjectile() const;
         Environment getEnvironment() const;
+        const std::vector<TrajectoryPoint> &getTrajectoryPoints() const { return trajectoryRecorder.getPoints(); }
+        std::optional<TrajectoryPoint> getApexPoint() const { return trajectoryRecorder.getApexPoint(); }
 
         float getTimeGlobal() const { return timeGlobal; }
         float getPhysicsTimeStep() const { return timeStepPhysics; }

@@ -72,6 +72,7 @@ namespace physim
         ImGui::Text("Simulation Time: %.3f s", simulation.getTimeGlobal());
 
         const float horizontalRange = projectile.getPosition().x;
+        const std::optional<TrajectoryPoint> apexPoint = simulation.getApexPoint();
 
         if (projectile.isLanded())
         {
@@ -92,6 +93,17 @@ namespace physim
         {
             ImGui::Text("Flight Time: waiting for launch");
             ImGui::Text("Current Range: %.3f m", horizontalRange);
+        }
+
+        if (apexPoint.has_value())
+        {
+            ImGui::Text("Apex Height: %.3f m", apexPoint->y);
+            ImGui::Text("Time To Apex: %.3f s", apexPoint->time);
+        }
+        else if (projectile.isLaunched())
+        {
+            ImGui::Text("Apex Height: waiting");
+            ImGui::Text("Time To Apex: waiting");
         }
 
         ImGui::Separator();

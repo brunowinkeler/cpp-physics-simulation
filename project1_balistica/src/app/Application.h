@@ -8,6 +8,7 @@
 #include "rendering/BackgroundRenderer.h"
 #include "rendering/Camera.h"
 #include "rendering/ProjectileRenderer.h"
+#include "rendering/TrajectoryRenderer.h"
 
 namespace physim
 {
@@ -33,6 +34,7 @@ namespace physim
         Simulation simulation;
         UiMenus uiMenus;
         BackgroundRenderer backgroundRenderer;
+        TrajectoryRenderer trajectoryRenderer{simulation, projectile};
         ProjectileRenderer projectileRenderer{projectile};
         Camera camera;
     };
