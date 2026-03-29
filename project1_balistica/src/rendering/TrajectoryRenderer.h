@@ -19,6 +19,7 @@ namespace physim
     private:
         void drawTrajectoryPath() const;
         void drawApexMarker() const;
+        void drawFinalRangeMarker() const;
 
         const Simulation &simulation;
         const Projectile &projectile;

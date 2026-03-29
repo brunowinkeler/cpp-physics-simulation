@@ -87,10 +87,7 @@ namespace physim
         // Draw mouse reference
         if (!ImGui::GetIO().WantCaptureMouse)
         {
-            Vector2 mouseWorldPos = GetScreenToWorld2D(GetMousePosition(), camera.getCamera2D());
             DrawCircleV(GetMousePosition(), 2, colors::White);
-            DrawTextEx(GetFontDefault(), TextFormat("[%i, %i]", (int)mouseWorldPos.x, (int)mouseWorldPos.y),
-                       Vector2Add(GetMousePosition(), (Vector2){-44, -24}), 16, 2, colors::White);
             DrawText("Mouse left button drag to move, mouse wheel to zoom", 20, 20, 16, colors::White);
         }
 
