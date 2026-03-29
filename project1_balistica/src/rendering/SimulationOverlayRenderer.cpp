@@ -53,6 +53,6 @@ namespace physim
         }
 
         DrawCircleV(GetMousePosition(), 2, colors::White);
-        DrawText("Mouse left button drag to move, mouse wheel to zoom", 20, 20, 16, colors::White);
+        DrawText("WASD pan | Q/E zoom | F reset camera | Space start/pause | R reset", 20, 20, 16, colors::White);
     }
 } // namespace physim

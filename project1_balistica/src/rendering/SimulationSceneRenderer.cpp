@@ -9,9 +9,9 @@ namespace physim
     {
     }
 
-    void SimulationSceneRenderer::updateCamera()
+    void SimulationSceneRenderer::updateCamera(float frameTime)
     {
-        camera.update();
+        camera.update(frameTime);
     }
 
     void SimulationSceneRenderer::render()

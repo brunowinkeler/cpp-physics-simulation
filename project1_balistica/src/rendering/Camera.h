@@ -8,7 +8,7 @@ namespace physim
     class Camera
     {
     public:
-        void update();
+        void update(float frameTime);
         void reset();
         Camera2D &getCamera2D() { return camera2D; }
 

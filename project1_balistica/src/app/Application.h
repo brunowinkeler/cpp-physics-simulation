@@ -19,7 +19,8 @@ namespace physim
         void run();
 
     private:
-        void updateSimulation();
+        void handleSimulationShortcuts();
+        void updateSimulation(float frameTime);
         void draw();
         void syncSceneHighlights();
 

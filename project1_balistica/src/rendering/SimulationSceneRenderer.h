@@ -16,7 +16,7 @@ namespace physim
     public:
         SimulationSceneRenderer(Simulation &simulation, Projectile &projectile);
 
-        void updateCamera();
+        void updateCamera(float frameTime);
         void render();
         void setHighlightedLaunches(int selectedLaunchId, int hoveredLaunchId);
 

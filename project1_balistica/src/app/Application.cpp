@@ -2,6 +2,7 @@
 
 #include "core/RaylibDefinitions.h"
 
+#include "imgui.h"
 #include "raylib.h"
 #include "rlImGui.h"
 
@@ -30,15 +31,43 @@ namespace physim
     {
         while (!WindowShouldClose())
         {
-            sceneRenderer.updateCamera();
-            updateSimulation();
+            const float frameTime = GetFrameTime();
+
+            handleSimulationShortcuts();
+            sceneRenderer.updateCamera(frameTime);
+            updateSimulation(frameTime);
             draw();
         }
     }
 
-    void Application::updateSimulation()
+    void Application::handleSimulationShortcuts()
     {
-        float timeStep = GetFrameTime() * environment.timeScale; // Scale time step by environment's time scale
+        if (ImGui::GetIO().WantCaptureKeyboard || ImGui::GetIO().WantTextInput)
+        {
+            return;
+        }
+
+        if (IsKeyPressed(KEY_SPACE))
+        {
+            if (simulation.isRunning())
+            {
+                simulation.stop();
+            }
+            else
+            {
+                simulation.start();
+            }
+        }
+
+        if (IsKeyPressed(KEY_R))
+        {
+            simulation.reset();
+        }
+    }
+
+    void Application::updateSimulation(float frameTime)
+    {
+        const float timeStep = frameTime * environment.timeScale; // Scale time step by environment's time scale
         simulation.update(timeStep);
     }
 
