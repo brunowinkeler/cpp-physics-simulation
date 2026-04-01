@@ -3,15 +3,29 @@
 # ---------------------------------------------------------------------------
 set(EXECUTABLE_NAME "SmokeTests")
 
+add_library(PhysimTestSupport INTERFACE)
+target_include_directories(PhysimTestSupport INTERFACE
+    ${CMAKE_SOURCE_DIR}
+    ${CMAKE_SOURCE_DIR}/project1_balistica/src
+)
+target_link_libraries(PhysimTestSupport INTERFACE
+    GTest::gmock_main
+)
+
 add_executable(${EXECUTABLE_NAME}
     smoke.cpp
 )
 
 add_executable(ProjectilePhysicsTests
     projectile_physics.cpp
+    simulation_tests.cpp
+    trajectory_recorder_tests.cpp
     ${CMAKE_SOURCE_DIR}/project1_balistica/src/physics/Projectile.cpp
     ${CMAKE_SOURCE_DIR}/project1_balistica/src/simulation/Simulation.cpp
     ${CMAKE_SOURCE_DIR}/project1_balistica/src/simulation/TrajectoryRecorder.cpp
+)
+target_link_libraries(ProjectilePhysicsTests PRIVATE
+    PhysimTestSupport
 )
 
 # rlImGui needs to be compiled alongside ImGui headers
@@ -38,12 +52,6 @@ target_link_libraries(${EXECUTABLE_NAME} PRIVATE
 )
 
 physim_apply_target_defaults(${EXECUTABLE_NAME})
-
-target_include_directories(ProjectilePhysicsTests PRIVATE
-    ${CMAKE_SOURCE_DIR}
-    ${CMAKE_SOURCE_DIR}/project1_balistica/src
-)
-
 physim_apply_target_defaults(ProjectilePhysicsTests)
 
 if(BUILD_TESTING)
