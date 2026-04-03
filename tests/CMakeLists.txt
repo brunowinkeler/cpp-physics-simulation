@@ -7,6 +7,7 @@ add_library(PhysimTestSupport INTERFACE)
 target_include_directories(PhysimTestSupport INTERFACE
     ${CMAKE_SOURCE_DIR}
     ${CMAKE_SOURCE_DIR}/project1_balistica/src
+    ${CMAKE_SOURCE_DIR}/project2_pendulum/src
     ${CMAKE_SOURCE_DIR}/tests
 )
 target_link_libraries(PhysimTestSupport INTERFACE
@@ -39,6 +40,19 @@ target_link_libraries(Project1BalisticaTests PRIVATE
     PhysimTestSupport
 )
 
+add_executable(Project2PendulumTests
+    project2_pendulum/pendulum_physics_tests.cpp
+    project2_pendulum/pendulum_simulation_tests.cpp
+    ${CMAKE_SOURCE_DIR}/project2_pendulum/src/physics/SimplePendulum.cpp
+    ${CMAKE_SOURCE_DIR}/project2_pendulum/src/physics/DoublePendulum.cpp
+    ${CMAKE_SOURCE_DIR}/project2_pendulum/src/simulation/PendulumSimulation.cpp
+    ${CMAKE_SOURCE_DIR}/core/physics/IntegrationMethod.cpp
+    ${CMAKE_SOURCE_DIR}/core/simulation/TrajectoryRecorder.cpp
+)
+target_link_libraries(Project2PendulumTests PRIVATE
+    PhysimTestSupport
+)
+
 # rlImGui needs to be compiled alongside ImGui headers
 target_sources(${EXECUTABLE_NAME} PRIVATE
     ${rlimgui_SOURCE_DIR}/rlImGui.cpp
@@ -65,6 +79,7 @@ target_link_libraries(${EXECUTABLE_NAME} PRIVATE
 physim_apply_target_defaults(${EXECUTABLE_NAME})
 physim_apply_target_defaults(CommonPhysicsTests)
 physim_apply_target_defaults(Project1BalisticaTests)
+physim_apply_target_defaults(Project2PendulumTests)
 
 if(BUILD_TESTING)
     add_test(NAME common_physics_domain COMMAND CommonPhysicsTests)
@@ -76,6 +91,12 @@ if(BUILD_TESTING)
     add_test(NAME project1_balistica_domain COMMAND Project1BalisticaTests)
     set_tests_properties(project1_balistica_domain PROPERTIES
         LABELS "project1;physics"
+        TIMEOUT 15
+    )
+
+    add_test(NAME project2_pendulum_domain COMMAND Project2PendulumTests)
+    set_tests_properties(project2_pendulum_domain PROPERTIES
+        LABELS "project2;physics"
         TIMEOUT 15
     )
 
