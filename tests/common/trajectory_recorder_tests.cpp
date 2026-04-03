@@ -1,4 +1,4 @@
-#include "project1_balistica/src/simulation/TrajectoryRecorder.h"
+#include "core/simulation/TrajectoryRecorder.h"
 
 #include "gtest/gtest.h"
 

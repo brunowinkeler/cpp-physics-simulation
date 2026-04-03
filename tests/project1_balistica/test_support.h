@@ -1,5 +1,5 @@
-#ifndef TEST_SUPPORT_H
-#define TEST_SUPPORT_H
+#ifndef PROJECT1_BALISTICA_TEST_SUPPORT_H
+#define PROJECT1_BALISTICA_TEST_SUPPORT_H
 
 #include "project1_balistica/src/physics/Projectile.h"
 #include "project1_balistica/src/simulation/Simulation.h"
@@ -42,4 +42,4 @@ namespace physim
     }
 }
 
-#endif // TEST_SUPPORT_H
+#endif // PROJECT1_BALISTICA_TEST_SUPPORT_H

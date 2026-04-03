@@ -12,8 +12,9 @@ set(PROJECT1_BALISTICA_SOURCES
     src/rendering/SimulationSceneRenderer.cpp
     src/rendering/TrajectoryRenderer.cpp
     src/simulation/Simulation.cpp
-    src/simulation/TrajectoryRecorder.cpp
     src/ui/UiMenus.cpp
+    ../core/physics/IntegrationMethod.cpp
+    ../core/simulation/TrajectoryRecorder.cpp
 )
 
 add_executable(${EXECUTABLE_NAME}

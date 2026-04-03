@@ -1,6 +1,8 @@
 #ifndef PROJECTILE_H
 #define PROJECTILE_H
 
+#include "core/physics/IntegrationMethod.h"
+
 #include "Environment.h"
 
 namespace physim
@@ -32,18 +34,6 @@ namespace physim
         double dvx;
         double dvy;
     };
-
-    // Officially supported integrators for the current projectile model.
-    enum class IntegrationMethod
-    {
-        SymplecticEuler = 0,
-        RungeKutta4
-    };
-
-    inline constexpr IntegrationMethod DEFAULT_INTEGRATION_METHOD = IntegrationMethod::RungeKutta4;
-
-    const char *integrationMethodLabel(IntegrationMethod method);
-    bool isSupportedIntegrationMethod(IntegrationMethod method);
 
     class Projectile
     {

@@ -2,6 +2,7 @@
 #include "imgui.h"
 #include "glm/glm.hpp"
 #include "glm/gtc/constants.hpp"
+
 #include <cstdlib>
 #include <cstdio>
 #include <string_view>
@@ -43,8 +44,7 @@ int main(int argc, char **argv)
 
     SetConfigFlags(FLAG_VSYNC_HINT | FLAG_MSAA_4X_HINT | FLAG_WINDOW_RESIZABLE);
     InitWindow(screenW, screenH, "Physics Simulation — Infraestrutura v0.1");
-    // SetTargetFPS(60);
-    rlImGuiSetup(true); // dark theme
+    rlImGuiSetup(true);
 
     float gravity = 9.81f;
     float timeScale = 1.0f;
@@ -57,22 +57,18 @@ int main(int argc, char **argv)
     while (!WindowShouldClose() && !IsKeyDown(KEY_ESCAPE))
     {
         BeginDrawing();
-        ClearBackground(physim::colors::CatppuccinMocha); // dark background (Catppuccin Mocha)
+        ClearBackground(physim::colors::CatppuccinMocha);
 
-        // --- Raylib: status text -----------------------------------
-        DrawText("Raylib OK", 20, 20, 20, physim::colors::LightGreen); // green
-        DrawText("ImGui  OK", 20, 46, 20, physim::colors::LightBlue);  // blue
-        DrawText("GLM    OK", 20, 72, 20, physim::colors::Orange);     // orange
+        DrawText("Raylib OK", 20, 20, 20, physim::colors::LightGreen);
+        DrawText("ImGui  OK", 20, 46, 20, physim::colors::LightBlue);
+        DrawText("GLM    OK", 20, 72, 20, physim::colors::Orange);
 
         char coordBuf[64];
-        snprintf(coordBuf, sizeof(coordBuf),
-                 "GLM vec2: (%.0f, %.0f)", origin.x, origin.y);
+        snprintf(coordBuf, sizeof(coordBuf), "GLM vec2: (%.0f, %.0f)", origin.x, origin.y);
         DrawText(coordBuf, 20, 98, 18, physim::colors::LightGray);
 
-        // Circle representing the origin of the coordinate system
         DrawCircleV({origin.x, origin.y}, 8.f, physim::colors::LightPink);
 
-        // --- Dear ImGui: controls panel ---------------------------
         rlImGuiBegin();
 
         ImGui::SetNextWindowPos({620, 20}, ImGuiCond_Once);
@@ -89,7 +85,9 @@ int main(int argc, char **argv)
         ImGui::End();
 
         if (showDemo)
+        {
             ImGui::ShowDemoWindow(&showDemo);
+        }
 
         ImGui::SetNextWindowPos({100, 20}, ImGuiCond_Once);
         ImGui::SetNextWindowSize({300, 250}, ImGuiCond_Once);
@@ -102,7 +100,6 @@ int main(int argc, char **argv)
 
         rlImGuiEnd();
 
-        // FPS at bottom-left corner
         DrawFPS(20, GetScreenHeight() - 26);
 
         EndDrawing();

@@ -1,9 +1,10 @@
 #ifndef SIMULATION_H
 #define SIMULATION_H
 
+#include "core/simulation/TrajectoryRecorder.h"
+
 #include "physics/Projectile.h"
 #include "physics/Environment.h"
-#include "TrajectoryRecorder.h"
 
 #include <optional>
 #include <vector>

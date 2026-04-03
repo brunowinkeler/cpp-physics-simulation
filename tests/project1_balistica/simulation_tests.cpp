@@ -7,7 +7,7 @@
 
 namespace testsupport = physim::testsupport;
 
-TEST(SimulationTest, TimeStopsAtExactLanding)
+TEST(Project1SimulationTest, TimeStopsAtExactLanding)
 {
     physim::Projectile projectile;
     physim::Environment environment;
@@ -36,7 +36,7 @@ TEST(SimulationTest, TimeStopsAtExactLanding)
     EXPECT_NEAR(simulation.getTimeGlobal(), landingTime, 0.0001) << "Simulation time should stop after landing";
 }
 
-TEST(SimulationTest, StateTransitions)
+TEST(Project1SimulationTest, StateTransitions)
 {
     physim::Projectile projectile;
     physim::Environment environment;
@@ -67,7 +67,7 @@ TEST(SimulationTest, StateTransitions)
     EXPECT_EQ(simulation.getState(), physim::SimulationState::Idle) << "Reset should return simulation to idle state";
 }
 
-TEST(SimulationTest, AccessorsExposeConstViews)
+TEST(Project1SimulationTest, AccessorsExposeConstViews)
 {
     physim::Projectile projectile;
     physim::Environment environment;
@@ -79,7 +79,7 @@ TEST(SimulationTest, AccessorsExposeConstViews)
         << "Simulation environment accessor should expose the original environment";
 }
 
-TEST(SimulationTest, ApexPointReportsExpectedHeightAndTime)
+TEST(Project1SimulationTest, ApexPointReportsExpectedHeightAndTime)
 {
     physim::Projectile projectile;
     physim::Environment environment;
@@ -110,7 +110,7 @@ TEST(SimulationTest, ApexPointReportsExpectedHeightAndTime)
     EXPECT_NEAR(apexPoint->x, expectedApexX, 0.05) << "Apex horizontal position";
 }
 
-TEST(SimulationTest, ResetArchivesTrajectoryHistoryAndDeduplicates)
+TEST(Project1SimulationTest, ResetArchivesTrajectoryHistoryAndDeduplicates)
 {
     physim::Projectile projectile;
     physim::Environment environment;
