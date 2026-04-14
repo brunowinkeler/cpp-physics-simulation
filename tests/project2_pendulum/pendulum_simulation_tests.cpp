@@ -40,6 +40,9 @@ TEST(PendulumSimulationTest, SimpleModeRecordsPrimaryTrail)
 
     EXPECT_GT(simulation.getPrimaryTrailPoints().size(), 2u);
     EXPECT_TRUE(simulation.getSecondaryTrailPoints().empty());
+    EXPECT_GT(simulation.getEnergyHistory().size(), 2u);
+    EXPECT_GT(simulation.getPrimaryPhaseSpaceHistory().size(), 2u);
+    EXPECT_TRUE(simulation.getSecondaryPhaseSpaceHistory().empty());
 }
 
 TEST(PendulumSimulationTest, DoubleModeRecordsTwoTrails)
@@ -55,6 +58,9 @@ TEST(PendulumSimulationTest, DoubleModeRecordsTwoTrails)
 
     EXPECT_GT(simulation.getPrimaryTrailPoints().size(), 2u);
     EXPECT_GT(simulation.getSecondaryTrailPoints().size(), 2u);
+    EXPECT_GT(simulation.getEnergyHistory().size(), 2u);
+    EXPECT_GT(simulation.getPrimaryPhaseSpaceHistory().size(), 2u);
+    EXPECT_GT(simulation.getSecondaryPhaseSpaceHistory().size(), 2u);
 }
 
 TEST(PendulumSimulationTest, ModeSwitchResetsTimeAndTrails)
@@ -75,4 +81,7 @@ TEST(PendulumSimulationTest, ModeSwitchResetsTimeAndTrails)
     EXPECT_NEAR(simulation.getTimeGlobal(), 0.0, 1.0e-6);
     EXPECT_EQ(simulation.getPrimaryTrailPoints().size(), 1u);
     EXPECT_EQ(simulation.getSecondaryTrailPoints().size(), 1u);
+    EXPECT_EQ(simulation.getEnergyHistory().size(), 1u);
+    EXPECT_EQ(simulation.getPrimaryPhaseSpaceHistory().size(), 1u);
+    EXPECT_EQ(simulation.getSecondaryPhaseSpaceHistory().size(), 1u);
 }

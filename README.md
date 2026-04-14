@@ -22,6 +22,7 @@ Dependencies are fetched and built by CMake through `FetchContent`.
 - Launch parameters are editable only while the simulation is idle.
 - Launch history archives unique runs, keeps trajectory styling stable, and stores summary metrics such as range, flight time, and apex.
 - Current trajectory recording uses an explicit retention policy: samples are recorded at up to 240 Hz and compacted to a maximum of 4096 points per trajectory.
+- Ships with a project-local theory reference in [project1_balistica/PHYSICS_THEORY.md](project1_balistica/PHYSICS_THEORY.md).
 
 ### Project 2 — Pendulum Lab
 
@@ -29,6 +30,7 @@ Dependencies are fetched and built by CMake through `FetchContent`.
 - Supports Runge-Kutta 4 and Symplectic Euler for both models.
 - Tracks energy, simulation time, and one or two trail recorders depending on the active mode.
 - Exposes gravity, damping, lengths, masses, initial conditions, visualization toggles, and fixed physics timestep through ImGui.
+- Includes auxiliary analysis plots for energy history and phase-space trajectories.
 - Ships with a project-local theory reference in [project2_pendulum/PHYSICS_THEORY.md](project2_pendulum/PHYSICS_THEORY.md).
 
 ## Prerequisites
@@ -103,6 +105,7 @@ Registered tests:
 - `project1_balistica_domain`: deterministic domain tests for integration, landing interpolation, state transitions, and launch history.
 - `project2_pendulum_domain`: deterministic domain tests for simple and double pendulum physics plus pendulum simulation stepping.
 - `smoke_graphics`: short graphical smoke run through Raylib, ImGui, and rlImGui.
+- `project2_pendulum_smoke_graphics`: short graphical smoke run specific to the pendulum module.
 
 Test tree layout:
 

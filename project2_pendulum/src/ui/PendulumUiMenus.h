@@ -20,6 +20,9 @@ namespace physim
         void drawSimplePendulumSection(bool editableInitialConditions);
         void drawDoublePendulumSection(bool editableInitialConditions);
         void drawStatusSection() const;
+        void drawAnalysisSection() const;
+        void drawEnergyHistoryPlot() const;
+        void drawPhaseSpacePlot() const;
         void drawControlSection();
 
         PendulumSession &session;

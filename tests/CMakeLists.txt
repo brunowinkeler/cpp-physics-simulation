@@ -18,6 +18,22 @@ add_executable(${EXECUTABLE_NAME}
     common/smoke.cpp
 )
 
+add_executable(Project2PendulumSmokeTests
+    project2_pendulum/smoke.cpp
+    ${CMAKE_SOURCE_DIR}/project2_pendulum/src/physics/SimplePendulum.cpp
+    ${CMAKE_SOURCE_DIR}/project2_pendulum/src/physics/DoublePendulum.cpp
+    ${CMAKE_SOURCE_DIR}/project2_pendulum/src/rendering/PendulumBackgroundRenderer.cpp
+    ${CMAKE_SOURCE_DIR}/project2_pendulum/src/rendering/PendulumCamera.cpp
+    ${CMAKE_SOURCE_DIR}/project2_pendulum/src/rendering/PendulumOverlayRenderer.cpp
+    ${CMAKE_SOURCE_DIR}/project2_pendulum/src/rendering/PendulumRenderer.cpp
+    ${CMAKE_SOURCE_DIR}/project2_pendulum/src/rendering/PendulumSceneRenderer.cpp
+    ${CMAKE_SOURCE_DIR}/project2_pendulum/src/rendering/PendulumTrajectoryRenderer.cpp
+    ${CMAKE_SOURCE_DIR}/project2_pendulum/src/simulation/PendulumSimulation.cpp
+    ${CMAKE_SOURCE_DIR}/project2_pendulum/src/ui/PendulumUiMenus.cpp
+    ${CMAKE_SOURCE_DIR}/core/physics/IntegrationMethod.cpp
+    ${CMAKE_SOURCE_DIR}/core/simulation/TrajectoryRecorder.cpp
+)
+
 add_executable(CommonPhysicsTests
     common/integration_method_tests.cpp
     common/trajectory_recorder_tests.cpp
@@ -53,30 +69,40 @@ target_link_libraries(Project2PendulumTests PRIVATE
     PhysimTestSupport
 )
 
-# rlImGui needs to be compiled alongside ImGui headers
-target_sources(${EXECUTABLE_NAME} PRIVATE
-    ${rlimgui_SOURCE_DIR}/rlImGui.cpp
+function(physim_configure_smoke_target target)
+    target_sources(${target} PRIVATE
+        ${rlimgui_SOURCE_DIR}/rlImGui.cpp
+    )
+
+    if(MSVC)
+        set_source_files_properties(${rlimgui_SOURCE_DIR}/rlImGui.cpp PROPERTIES COMPILE_OPTIONS "/w")
+    else()
+        set_source_files_properties(${rlimgui_SOURCE_DIR}/rlImGui.cpp PROPERTIES COMPILE_OPTIONS "-w")
+    endif()
+
+    target_include_directories(${target} PRIVATE
+        ${rlimgui_SOURCE_DIR}
+        ${imgui_SOURCE_DIR}
+        ${CMAKE_SOURCE_DIR}
+    )
+
+    target_link_libraries(${target} PRIVATE
+        raylib
+        imgui
+        glm::glm
+    )
+
+    physim_apply_target_defaults(${target})
+    physim_link_platform_libraries(${target})
+endfunction()
+
+target_include_directories(Project2PendulumSmokeTests PRIVATE
+    ${CMAKE_SOURCE_DIR}/project2_pendulum/src
 )
 
-if(MSVC)
-    set_source_files_properties(${rlimgui_SOURCE_DIR}/rlImGui.cpp PROPERTIES COMPILE_OPTIONS "/w")
-else()
-    set_source_files_properties(${rlimgui_SOURCE_DIR}/rlImGui.cpp PROPERTIES COMPILE_OPTIONS "-w")
-endif()
+physim_configure_smoke_target(${EXECUTABLE_NAME})
+physim_configure_smoke_target(Project2PendulumSmokeTests)
 
-target_include_directories(${EXECUTABLE_NAME} PRIVATE
-    ${rlimgui_SOURCE_DIR}
-    ${imgui_SOURCE_DIR}
-    ${CMAKE_SOURCE_DIR}
-)
-
-target_link_libraries(${EXECUTABLE_NAME} PRIVATE
-    raylib
-    imgui
-    glm::glm
-)
-
-physim_apply_target_defaults(${EXECUTABLE_NAME})
 physim_apply_target_defaults(CommonPhysicsTests)
 physim_apply_target_defaults(Project1BalisticaTests)
 physim_apply_target_defaults(Project2PendulumTests)
@@ -107,6 +133,12 @@ if(BUILD_TESTING)
         RUN_SERIAL TRUE
         TIMEOUT 15
     )
-endif()
 
-physim_link_platform_libraries(${EXECUTABLE_NAME})
+    add_test(NAME project2_pendulum_smoke_graphics COMMAND Project2PendulumSmokeTests --ctest)
+    set_tests_properties(project2_pendulum_smoke_graphics PROPERTIES
+        ENVIRONMENT "ASAN_OPTIONS=detect_leaks=0"
+        LABELS "graphics;smoke;project2"
+        RUN_SERIAL TRUE
+        TIMEOUT 15
+    )
+endif()

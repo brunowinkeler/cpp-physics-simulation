@@ -7,10 +7,21 @@
 
 #include <algorithm>
 #include <cmath>
+#include <limits>
 #include <numbers>
 
 namespace
 {
+    constexpr ImVec2 ANALYSIS_PLOT_SIZE{0.0f, 150.0f};
+    constexpr std::size_t MAX_RENDERED_ANALYSIS_POINTS = 512;
+    constexpr int ANALYSIS_GRID_SUBDIVISIONS = 4;
+    constexpr ImU32 ANALYSIS_BACKGROUND_COLOR = IM_COL32(18, 18, 28, 220);
+    constexpr ImU32 ANALYSIS_BORDER_COLOR = IM_COL32(145, 150, 170, 255);
+    constexpr ImU32 ANALYSIS_GRID_COLOR = IM_COL32(80, 82, 95, 180);
+    constexpr ImU32 ANALYSIS_AXIS_COLOR = IM_COL32(210, 214, 230, 220);
+    constexpr ImU32 PRIMARY_PHASE_COLOR = IM_COL32(137, 220, 235, 255);
+    constexpr ImU32 SECONDARY_PHASE_COLOR = IM_COL32(255, 179, 135, 255);
+
     const char *simulationStateLabel(physim::PendulumSimulationState state)
     {
         switch (state)
@@ -22,6 +33,147 @@ namespace
         case physim::PendulumSimulationState::Idle:
         default:
             return "Idle";
+        }
+    }
+
+    bool isFiniteScalarHistorySample(const physim::ScalarHistorySample &sample)
+    {
+        return std::isfinite(sample.time) && std::isfinite(sample.value);
+    }
+
+    bool isFinitePhaseSpaceSample(const physim::PhaseSpaceSample &sample)
+    {
+        return std::isfinite(sample.time) && std::isfinite(sample.angle) && std::isfinite(sample.angularVelocity);
+    }
+
+    std::size_t computeRenderedPointCount(std::size_t sampleCount, float availableWidth)
+    {
+        if (sampleCount <= 1)
+        {
+            return sampleCount;
+        }
+
+        const std::size_t widthBudget = static_cast<std::size_t>(std::max(2.0f, std::ceil(availableWidth)));
+        return std::min(sampleCount, std::min(widthBudget, MAX_RENDERED_ANALYSIS_POINTS));
+    }
+
+    std::size_t mapRenderedSampleIndex(std::size_t sampleCount, std::size_t renderedPointCount, std::size_t renderedIndex)
+    {
+        if (sampleCount <= 1 || renderedPointCount <= 1)
+        {
+            return 0;
+        }
+
+        return (renderedIndex * (sampleCount - 1)) / (renderedPointCount - 1);
+    }
+
+    struct PhasePlotBounds
+    {
+        float minAngle{std::numeric_limits<float>::max()};
+        float maxAngle{std::numeric_limits<float>::lowest()};
+        float minAngularVelocity{std::numeric_limits<float>::max()};
+        float maxAngularVelocity{std::numeric_limits<float>::lowest()};
+    };
+
+    void expandPhaseBounds(const std::vector<physim::PhaseSpaceSample> &samples, PhasePlotBounds &bounds)
+    {
+        for (const physim::PhaseSpaceSample &sample : samples)
+        {
+            if (!isFinitePhaseSpaceSample(sample))
+            {
+                continue;
+            }
+
+            bounds.minAngle = std::min(bounds.minAngle, sample.angle);
+            bounds.maxAngle = std::max(bounds.maxAngle, sample.angle);
+            bounds.minAngularVelocity = std::min(bounds.minAngularVelocity, sample.angularVelocity);
+            bounds.maxAngularVelocity = std::max(bounds.maxAngularVelocity, sample.angularVelocity);
+        }
+    }
+
+    PhasePlotBounds normalizePhaseBounds(PhasePlotBounds bounds)
+    {
+        if (!std::isfinite(bounds.minAngle) || !std::isfinite(bounds.maxAngle))
+        {
+            return {-1.0f, 1.0f, -1.0f, 1.0f};
+        }
+
+        if ((bounds.maxAngle - bounds.minAngle) < 1.0e-4f)
+        {
+            bounds.minAngle -= 1.0f;
+            bounds.maxAngle += 1.0f;
+        }
+
+        if ((bounds.maxAngularVelocity - bounds.minAngularVelocity) < 1.0e-4f)
+        {
+            bounds.minAngularVelocity -= 1.0f;
+            bounds.maxAngularVelocity += 1.0f;
+        }
+
+        const float anglePadding = 0.08f * (bounds.maxAngle - bounds.minAngle);
+        const float velocityPadding = 0.08f * (bounds.maxAngularVelocity - bounds.minAngularVelocity);
+
+        bounds.minAngle -= anglePadding;
+        bounds.maxAngle += anglePadding;
+        bounds.minAngularVelocity -= velocityPadding;
+        bounds.maxAngularVelocity += velocityPadding;
+
+        return bounds;
+    }
+
+    ImVec2 mapPhaseSpaceSample(const physim::PhaseSpaceSample &sample,
+                               const PhasePlotBounds &bounds,
+                               const ImVec2 &topLeft,
+                               const ImVec2 &size)
+    {
+        const float normalizedX = (sample.angle - bounds.minAngle) / (bounds.maxAngle - bounds.minAngle);
+        const float normalizedY = (sample.angularVelocity - bounds.minAngularVelocity) / (bounds.maxAngularVelocity - bounds.minAngularVelocity);
+
+        return {
+            topLeft.x + (normalizedX * size.x),
+            topLeft.y + size.y - (normalizedY * size.y),
+        };
+    }
+
+    void drawPhaseTrace(ImDrawList *drawList,
+                        const std::vector<physim::PhaseSpaceSample> &samples,
+                        const PhasePlotBounds &bounds,
+                        const ImVec2 &topLeft,
+                        const ImVec2 &size,
+                        ImU32 color)
+    {
+        const std::size_t renderedPointCount = computeRenderedPointCount(samples.size(), size.x);
+        if (renderedPointCount < 2)
+        {
+            return;
+        }
+
+        bool hasPreviousPoint = false;
+        ImVec2 previousPoint{};
+
+        for (std::size_t renderedIndex = 0; renderedIndex < renderedPointCount; ++renderedIndex)
+        {
+            const physim::PhaseSpaceSample &sample = samples[mapRenderedSampleIndex(samples.size(), renderedPointCount, renderedIndex)];
+            if (!isFinitePhaseSpaceSample(sample))
+            {
+                hasPreviousPoint = false;
+                continue;
+            }
+
+            const ImVec2 currentPoint = mapPhaseSpaceSample(sample, bounds, topLeft, size);
+            if (!std::isfinite(currentPoint.x) || !std::isfinite(currentPoint.y))
+            {
+                hasPreviousPoint = false;
+                continue;
+            }
+
+            if (hasPreviousPoint)
+            {
+                drawList->AddLine(previousPoint, currentPoint, color, 1.5f);
+            }
+
+            previousPoint = currentPoint;
+            hasPreviousPoint = true;
         }
     }
 }
@@ -78,6 +230,7 @@ namespace physim
         }
 
         drawStatusSection();
+        drawAnalysisSection();
         drawControlSection();
 
         ImGui::End();
@@ -251,6 +404,174 @@ namespace physim
             ImGui::Text("Bob 1 Speed: %.3f m/s", bobs.first.speed);
             ImGui::Text("Bob 2 Speed: %.3f m/s", bobs.second.speed);
         }
+    }
+
+    void PendulumUiMenus::drawAnalysisSection() const
+    {
+        ImGui::Separator();
+        ImGui::Spacing();
+        ImGui::TextDisabled("Analysis Plots");
+        drawEnergyHistoryPlot();
+        drawPhaseSpacePlot();
+    }
+
+    void PendulumUiMenus::drawEnergyHistoryPlot() const
+    {
+        const auto &energyHistory = session.getSimulation().getEnergyHistory();
+
+        ImGui::TextDisabled("Energy History");
+        if (energyHistory.empty())
+        {
+            ImGui::TextDisabled("No energy samples recorded yet.");
+            return;
+        }
+
+        const std::size_t renderedPointCount = computeRenderedPointCount(energyHistory.size(), ImGui::GetContentRegionAvail().x);
+        std::vector<float> renderedEnergyValues;
+        renderedEnergyValues.reserve(renderedPointCount);
+
+        float minimumEnergy = std::numeric_limits<float>::max();
+        float maximumEnergy = std::numeric_limits<float>::lowest();
+        float firstSampleTime = 0.0f;
+        float lastSampleTime = 0.0f;
+
+        for (std::size_t renderedIndex = 0; renderedIndex < renderedPointCount; ++renderedIndex)
+        {
+            const ScalarHistorySample &sample = energyHistory[mapRenderedSampleIndex(energyHistory.size(), renderedPointCount, renderedIndex)];
+            if (!isFiniteScalarHistorySample(sample))
+            {
+                continue;
+            }
+
+            if (renderedEnergyValues.empty())
+            {
+                firstSampleTime = sample.time;
+            }
+
+            lastSampleTime = sample.time;
+            renderedEnergyValues.push_back(sample.value);
+            minimumEnergy = std::min(minimumEnergy, sample.value);
+            maximumEnergy = std::max(maximumEnergy, sample.value);
+        }
+
+        if (renderedEnergyValues.empty())
+        {
+            ImGui::TextDisabled("Energy history contains only non-finite samples.");
+            return;
+        }
+
+        if ((maximumEnergy - minimumEnergy) < 1.0e-6f)
+        {
+            maximumEnergy += 1.0f;
+            minimumEnergy -= 1.0f;
+        }
+
+        const float duration = lastSampleTime - firstSampleTime;
+        ImGui::PlotLines("##energy-history-plot",
+                         renderedEnergyValues.data(),
+                         static_cast<int>(renderedEnergyValues.size()),
+                         0,
+                         nullptr,
+                         minimumEnergy,
+                         maximumEnergy,
+                         ANALYSIS_PLOT_SIZE);
+        ImGui::TextDisabled("Energy range: %.4f to %.4f J | span %.3f s",
+                            minimumEnergy,
+                            maximumEnergy,
+                            duration);
+    }
+
+    void PendulumUiMenus::drawPhaseSpacePlot() const
+    {
+        const auto &simulation = session.getSimulation();
+        const auto &primaryPhaseHistory = simulation.getPrimaryPhaseSpaceHistory();
+        const auto &secondaryPhaseHistory = simulation.getSecondaryPhaseSpaceHistory();
+
+        ImGui::TextDisabled("Phase Space");
+        if (primaryPhaseHistory.size() < 2)
+        {
+            ImGui::TextDisabled("No phase-space samples recorded yet.");
+            return;
+        }
+
+        const ImVec2 plotSize{std::max(ImGui::GetContentRegionAvail().x, 1.0f), 170.0f};
+        const ImVec2 cursorPosition = ImGui::GetCursorScreenPos();
+        ImGui::InvisibleButton("##phase-space-plot", plotSize);
+
+        ImDrawList *drawList = ImGui::GetWindowDrawList();
+        drawList->AddRectFilled(cursorPosition,
+                                {cursorPosition.x + plotSize.x, cursorPosition.y + plotSize.y},
+                                ANALYSIS_BACKGROUND_COLOR,
+                                6.0f);
+        drawList->AddRect(cursorPosition,
+                          {cursorPosition.x + plotSize.x, cursorPosition.y + plotSize.y},
+                          ANALYSIS_BORDER_COLOR,
+                          6.0f,
+                          0,
+                          1.0f);
+
+        for (int subdivision = 1; subdivision < ANALYSIS_GRID_SUBDIVISIONS; ++subdivision)
+        {
+            const float t = static_cast<float>(subdivision) / static_cast<float>(ANALYSIS_GRID_SUBDIVISIONS);
+            const float gridX = cursorPosition.x + (plotSize.x * t);
+            const float gridY = cursorPosition.y + (plotSize.y * t);
+
+            drawList->AddLine({gridX, cursorPosition.y}, {gridX, cursorPosition.y + plotSize.y}, ANALYSIS_GRID_COLOR, 1.0f);
+            drawList->AddLine({cursorPosition.x, gridY}, {cursorPosition.x + plotSize.x, gridY}, ANALYSIS_GRID_COLOR, 1.0f);
+        }
+
+        PhasePlotBounds bounds;
+        expandPhaseBounds(primaryPhaseHistory, bounds);
+        if (simulation.isDoubleMode())
+        {
+            expandPhaseBounds(secondaryPhaseHistory, bounds);
+        }
+
+        if (!std::isfinite(bounds.minAngle) || !std::isfinite(bounds.maxAngle) ||
+            !std::isfinite(bounds.minAngularVelocity) || !std::isfinite(bounds.maxAngularVelocity))
+        {
+            ImGui::TextDisabled("Phase-space history contains only non-finite samples.");
+            return;
+        }
+
+        bounds = normalizePhaseBounds(bounds);
+
+        if (bounds.minAngle <= 0.0f && bounds.maxAngle >= 0.0f)
+        {
+            const physim::PhaseSpaceSample zeroAngleSample{0.0f, 0.0f, bounds.minAngularVelocity};
+            const physim::PhaseSpaceSample zeroAngleSampleTop{0.0f, 0.0f, bounds.maxAngularVelocity};
+            drawList->AddLine(mapPhaseSpaceSample(zeroAngleSample, bounds, cursorPosition, plotSize),
+                              mapPhaseSpaceSample(zeroAngleSampleTop, bounds, cursorPosition, plotSize),
+                              ANALYSIS_AXIS_COLOR,
+                              1.0f);
+        }
+
+        if (bounds.minAngularVelocity <= 0.0f && bounds.maxAngularVelocity >= 0.0f)
+        {
+            const physim::PhaseSpaceSample zeroVelocitySample{0.0f, bounds.minAngle, 0.0f};
+            const physim::PhaseSpaceSample zeroVelocitySampleRight{0.0f, bounds.maxAngle, 0.0f};
+            drawList->AddLine(mapPhaseSpaceSample(zeroVelocitySample, bounds, cursorPosition, plotSize),
+                              mapPhaseSpaceSample(zeroVelocitySampleRight, bounds, cursorPosition, plotSize),
+                              ANALYSIS_AXIS_COLOR,
+                              1.0f);
+        }
+
+        drawPhaseTrace(drawList, primaryPhaseHistory, bounds, cursorPosition, plotSize, PRIMARY_PHASE_COLOR);
+        if (simulation.isDoubleMode())
+        {
+            drawPhaseTrace(drawList, secondaryPhaseHistory, bounds, cursorPosition, plotSize, SECONDARY_PHASE_COLOR);
+            ImGui::TextDisabled("Two traces: (theta1, omega1) and (theta2, omega2)");
+        }
+        else
+        {
+            ImGui::TextDisabled("Trace: (theta, omega) for the simple pendulum");
+        }
+
+        ImGui::TextDisabled("theta range: %.2f to %.2f rad | omega range: %.2f to %.2f rad/s",
+                            bounds.minAngle,
+                            bounds.maxAngle,
+                            bounds.minAngularVelocity,
+                            bounds.maxAngularVelocity);
     }
 
     void PendulumUiMenus::drawControlSection()
