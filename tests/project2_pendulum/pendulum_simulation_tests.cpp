@@ -140,3 +140,57 @@ TEST(PendulumSimulationTest, TrailWindowKeepsRecentSamplesAfterLongRun)
     EXPECT_LE(secondaryLag, secondaryMaxGap + 1.0e-4f)
         << "Secondary trail should remain close to the latest simulated state";
 }
+
+TEST(PendulumSimulationTest, PhaseWindowKeepsRecentSamplesAfterLongRun)
+{
+    constexpr std::size_t expectedMaxPhaseSamples = 1024;
+
+    physim::PendulumEnvironment environment;
+    physim::SimplePendulum simplePendulum;
+    physim::DoublePendulum doublePendulum;
+    physim::PendulumSimulation simulation{environment, simplePendulum, doublePendulum};
+
+    simulation.setMode(physim::PendulumMode::Double);
+    simulation.start();
+    physim::testsupport::runPendulumSimulationSteps(simulation, 10000, 0.001f);
+
+    const auto &primaryPhaseHistory = simulation.getPrimaryPhaseSpaceHistory();
+    const auto &secondaryPhaseHistory = simulation.getSecondaryPhaseSpaceHistory();
+
+    ASSERT_GT(primaryPhaseHistory.size(), 2u);
+    ASSERT_GT(secondaryPhaseHistory.size(), 2u);
+    EXPECT_LE(primaryPhaseHistory.size(), expectedMaxPhaseSamples);
+    EXPECT_LE(secondaryPhaseHistory.size(), expectedMaxPhaseSamples);
+    EXPECT_GT(primaryPhaseHistory.front().time, 0.0f)
+        << "Primary phase history should discard the oldest samples once the rolling window is full";
+    EXPECT_GT(secondaryPhaseHistory.front().time, 0.0f)
+        << "Secondary phase history should keep only the recent window";
+
+    float primaryMaxGap = 0.0f;
+    float secondaryMaxGap = 0.0f;
+    for (std::size_t index = 1; index < primaryPhaseHistory.size(); ++index)
+    {
+        primaryMaxGap = std::max(primaryMaxGap, primaryPhaseHistory[index].time - primaryPhaseHistory[index - 1].time);
+    }
+    for (std::size_t index = 1; index < secondaryPhaseHistory.size(); ++index)
+    {
+        secondaryMaxGap = std::max(secondaryMaxGap, secondaryPhaseHistory[index].time - secondaryPhaseHistory[index - 1].time);
+    }
+
+    EXPECT_LE(primaryMaxGap, 0.01f)
+        << "Primary phase history should preserve a fine temporal resolution inside the retained window";
+    EXPECT_LE(secondaryMaxGap, 0.01f)
+        << "Secondary phase history should preserve a fine temporal resolution inside the retained window";
+
+    const float primaryLag = simulation.getTimeGlobal() - primaryPhaseHistory.back().time;
+    const float secondaryLag = simulation.getTimeGlobal() - secondaryPhaseHistory.back().time;
+
+    EXPECT_GE(primaryLag, 0.0f)
+        << "Primary phase samples should not move ahead of simulation time";
+    EXPECT_GE(secondaryLag, 0.0f)
+        << "Secondary phase samples should not move ahead of simulation time";
+    EXPECT_LE(primaryLag, primaryMaxGap + 1.0e-4f)
+        << "Primary phase history should remain close to the latest simulated state";
+    EXPECT_LE(secondaryLag, secondaryMaxGap + 1.0e-4f)
+        << "Secondary phase history should remain close to the latest simulated state";
+}
