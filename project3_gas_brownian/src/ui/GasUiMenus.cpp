@@ -15,6 +15,77 @@ namespace
 {
     constexpr std::size_t MAX_RENDERED_PRESSURE_POINTS = 512;
     constexpr ImVec2 PRESSURE_PLOT_SIZE{0.0f, 160.0f};
+    constexpr float MIN_TIME_SCALE = 0.1f;
+    constexpr float MAX_TIME_SCALE = 20.0f;
+    constexpr float MIN_BOX_WIDTH = 4.0f;
+    constexpr float MAX_BOX_WIDTH = 30.0f;
+    constexpr float MIN_BOX_HEIGHT = 2.0f;
+    constexpr float MAX_BOX_HEIGHT = 20.0f;
+    constexpr float MIN_PHYSICS_TIME_STEP = 1.0e-4f;
+    constexpr float MAX_PHYSICS_TIME_STEP = 1.0f / 60.0f;
+    constexpr float MIN_THERMAL_LEVEL = 20.0f;
+    constexpr float MAX_THERMAL_LEVEL = 600.0f;
+    constexpr float MIN_TRACER_MASS_SCALE = 1.0f;
+    constexpr float MAX_TRACER_MASS_SCALE = 64.0f;
+    constexpr float MIN_TRACER_RADIUS_SCALE = 1.0f;
+    constexpr float MAX_TRACER_RADIUS_SCALE = 8.0f;
+
+    const char *modeDescription(bool brownianMode)
+    {
+        return brownianMode
+                   ? "A heavier tracer moves inside the particle bath."
+                   : "A uniform particle bath inside the box.";
+    }
+
+    const char *gasPresetDescription(physim::GasPresetId gasPresetId)
+    {
+        switch (gasPresetId)
+        {
+        case physim::GasPresetId::Helium:
+            return "Light gas preset with high thermal agitation for the same effective temperature.";
+        case physim::GasPresetId::Air:
+            return "Balanced baseline preset for general experiments and comparisons.";
+        case physim::GasPresetId::Argon:
+            return "Heavier inert gas preset with slower characteristic particle speeds.";
+        case physim::GasPresetId::CarbonDioxide:
+        default:
+            return "Dense molecular preset useful for contrasting heavier bath particles.";
+        }
+    }
+
+    void drawParticleCountPresetButtons(physim::GasSimulation &simulation)
+    {
+        constexpr int COUNT_PRESETS[] = {100, 250, 500, 1000, 2000, 5000};
+
+        ImGui::TextDisabled("Quick counts");
+        for (std::size_t index = 0; index < (sizeof(COUNT_PRESETS) / sizeof(COUNT_PRESETS[0])); ++index)
+        {
+            ImGui::PushID(static_cast<int>(index));
+
+            const int countPreset = COUNT_PRESETS[index];
+            const bool selected = simulation.getParticleCount() == countPreset;
+            if (selected)
+            {
+                ImGui::PushStyleColor(ImGuiCol_Button, ImGui::GetStyleColorVec4(ImGuiCol_ButtonHovered));
+            }
+
+            if (ImGui::Button(std::to_string(countPreset).c_str(), {56.0f, 0.0f}))
+            {
+                simulation.setParticleCount(countPreset);
+            }
+
+            if (selected)
+            {
+                ImGui::PopStyleColor();
+            }
+
+            ImGui::PopID();
+            if (index + 1 < (sizeof(COUNT_PRESETS) / sizeof(COUNT_PRESETS[0])))
+            {
+                ImGui::SameLine();
+            }
+        }
+    }
 
     const char *simulationStateLabel(physim::GasSimulationState state)
     {
@@ -88,7 +159,7 @@ namespace physim
     {
         GasSimulation &simulation = session.getSimulation();
 
-        ImGui::TextDisabled("Mode");
+        ImGui::SeparatorText("Simulation Mode");
         if (!editable)
         {
             ImGui::BeginDisabled();
@@ -104,6 +175,8 @@ namespace physim
         {
             ImGui::EndDisabled();
         }
+
+        ImGui::TextDisabled("%s", modeDescription(simulation.isBrownianMode()));
     }
 
     void GasUiMenus::drawEnvironmentSection(bool editable)
@@ -111,11 +184,14 @@ namespace physim
         GasSimulation &simulation = session.getSimulation();
         GasEnvironment &environment = session.getEnvironment();
 
-        ImGui::Separator();
-        ImGui::Spacing();
-        ImGui::TextDisabled("Environment");
+        ImGui::SeparatorText("Bath And Box");
 
-        ImGui::SliderFloat("Time Scale", &environment.timeScale, 0.1f, 20.0f, "%.2fx");
+        float timeScale = environment.timeScale;
+        if (ImGui::InputFloat("Time Scale (x)", &timeScale, 0.10f, 1.00f, "%.2f"))
+        {
+            environment.timeScale = std::clamp(timeScale, MIN_TIME_SCALE, MAX_TIME_SCALE);
+        }
+        ImGui::TextDisabled("Runtime multiplier for the simulation clock.");
 
         if (!editable)
         {
@@ -128,19 +204,7 @@ namespace physim
             simulation.setParticleCount(particleCount);
         }
 
-        const int countPresets[] = {100, 250, 500, 1000, 2000, 5000};
-        if (ImGui::BeginCombo("Count Presets", "Apply..."))
-        {
-            for (int countPreset : countPresets)
-            {
-                const bool selected = simulation.getParticleCount() == countPreset;
-                if (ImGui::Selectable(std::to_string(countPreset).c_str(), selected))
-                {
-                    simulation.setParticleCount(countPreset);
-                }
-            }
-            ImGui::EndCombo();
-        }
+        drawParticleCountPresetButtons(simulation);
 
         int presetIndex = getGasPresetIndex(simulation.getGasPresetId());
         if (ImGui::BeginCombo("Gas Preset", simulation.getGasPreset().name))
@@ -157,27 +221,35 @@ namespace physim
             ImGui::EndCombo();
         }
 
+        const GasPreset &preset = simulation.getGasPreset();
+        ImGui::TextDisabled("%s", gasPresetDescription(preset.id));
+        ImGui::TextDisabled("Molar mass %.4e kg/mol | particle mass %.4e kg | effective radius %.4f m",
+                            preset.molarMassKgPerMol,
+                            preset.particleMassKg,
+                            preset.effectiveParticleRadius);
+        ImGui::TextDisabled("The radius is effective for collision and readability, not a literal molecular diameter.");
+
         float boxWidth = environment.boxWidth;
         float boxHeight = environment.boxHeight;
-        if (ImGui::SliderFloat("Box Width", &boxWidth, 4.0f, 30.0f, "%.1f m"))
+        if (ImGui::InputFloat("Box Width (m)", &boxWidth, 0.25f, 1.00f, "%.2f"))
         {
-            simulation.setBoxSize(boxWidth, environment.boxHeight);
+            simulation.setBoxSize(std::clamp(boxWidth, MIN_BOX_WIDTH, MAX_BOX_WIDTH), environment.boxHeight);
         }
-        if (ImGui::SliderFloat("Box Height", &boxHeight, 2.0f, 20.0f, "%.1f m"))
+        if (ImGui::InputFloat("Box Height (m)", &boxHeight, 0.25f, 1.00f, "%.2f"))
         {
-            simulation.setBoxSize(environment.boxWidth, boxHeight);
+            simulation.setBoxSize(environment.boxWidth, std::clamp(boxHeight, MIN_BOX_HEIGHT, MAX_BOX_HEIGHT));
         }
 
         float physicsTimeStep = simulation.getPhysicsTimeStep();
-        if (ImGui::SliderFloat("Physics dt", &physicsTimeStep, 1.0e-4f, 1.0f / 60.0f, "%.5f s", ImGuiSliderFlags_Logarithmic))
+        if (ImGui::InputFloat("Physics dt (s)", &physicsTimeStep, 0.0005f, 0.0050f, "%.5f"))
         {
-            simulation.setPhysicsTimeStep(physicsTimeStep);
+            simulation.setPhysicsTimeStep(std::clamp(physicsTimeStep, MIN_PHYSICS_TIME_STEP, MAX_PHYSICS_TIME_STEP));
         }
 
         float thermalLevel = simulation.getInitialTemperatureKelvin();
-        if (ImGui::SliderFloat("Thermal Level", &thermalLevel, 20.0f, 600.0f, "%.1f K"))
+        if (ImGui::InputFloat("Thermal Level (K)", &thermalLevel, 5.0f, 25.0f, "%.1f"))
         {
-            simulation.setInitialTemperatureKelvin(thermalLevel);
+            simulation.setInitialTemperatureKelvin(std::clamp(thermalLevel, MIN_THERMAL_LEVEL, MAX_THERMAL_LEVEL));
         }
 
         int randomSeed = static_cast<int>(simulation.getRandomSeed());
@@ -190,19 +262,13 @@ namespace physim
         {
             ImGui::EndDisabled();
         }
-
-        ImGui::TextDisabled("Gas analog: molar mass %.4e kg/mol | particle mass %.4e kg",
-                            simulation.getGasPreset().molarMassKgPerMol,
-                            simulation.getGasPreset().particleMassKg);
     }
 
     void GasUiMenus::drawVisualizationSection()
     {
         GasVisualizationSettings &visualization = session.getVisualizationSettings();
 
-        ImGui::Separator();
-        ImGui::Spacing();
-        ImGui::TextDisabled("Visualization");
+        ImGui::SeparatorText("Display");
         ImGui::Checkbox("Show Grid", &visualization.showGrid);
         ImGui::Checkbox("Show Pressure Plot", &visualization.showPressurePlot);
     }
@@ -215,15 +281,14 @@ namespace physim
             return;
         }
 
-        ImGui::Separator();
-        ImGui::Spacing();
-        ImGui::TextDisabled("Tracer Particle");
+        ImGui::SeparatorText("Brownian Tracer");
 
         bool tracerTrailEnabled = simulation.isTracerTrailEnabled();
         if (ImGui::Checkbox("Record Tracer Trail", &tracerTrailEnabled))
         {
             simulation.setTracerTrailEnabled(tracerTrailEnabled);
         }
+        ImGui::TextDisabled("Disable the trail to reduce update and draw cost at higher particle counts.");
 
         if (!editable)
         {
@@ -231,15 +296,15 @@ namespace physim
         }
 
         float tracerMassMultiplier = simulation.getTracerMassMultiplier();
-        if (ImGui::SliderFloat("Tracer Mass Scale", &tracerMassMultiplier, 1.0f, 64.0f, "%.1fx"))
+        if (ImGui::InputFloat("Tracer Mass Scale", &tracerMassMultiplier, 1.0f, 4.0f, "%.2f"))
         {
-            simulation.setTracerMassMultiplier(tracerMassMultiplier);
+            simulation.setTracerMassMultiplier(std::clamp(tracerMassMultiplier, MIN_TRACER_MASS_SCALE, MAX_TRACER_MASS_SCALE));
         }
 
         float tracerRadiusMultiplier = simulation.getTracerRadiusMultiplier();
-        if (ImGui::SliderFloat("Tracer Radius Scale", &tracerRadiusMultiplier, 1.0f, 8.0f, "%.1fx"))
+        if (ImGui::InputFloat("Tracer Radius Scale", &tracerRadiusMultiplier, 0.25f, 1.0f, "%.2f"))
         {
-            simulation.setTracerRadiusMultiplier(tracerRadiusMultiplier);
+            simulation.setTracerRadiusMultiplier(std::clamp(tracerRadiusMultiplier, MIN_TRACER_RADIUS_SCALE, MAX_TRACER_RADIUS_SCALE));
         }
 
         if (!editable)
@@ -252,16 +317,14 @@ namespace physim
     {
         const GasSimulation &simulation = session.getSimulation();
 
-        ImGui::Separator();
-        ImGui::Spacing();
-        ImGui::TextDisabled("Status");
+        ImGui::SeparatorText("Live Metrics");
         ImGui::Text("State: %s", simulationStateLabel(simulation.getState()));
         ImGui::Text("Sim Time: %.3f s", simulation.getTimeGlobal());
-        ImGui::Text("Pressure Instant: %.3e N/m", simulation.getCurrentPressureInstant());
-        ImGui::Text("Thermal Level: %.2f K", simulation.getCurrentTemperatureKelvin());
+        ImGui::Text("Instantaneous Pressure: %.3e N/m", simulation.getCurrentPressureInstant());
+        ImGui::Text("Effective Temperature: %.2f K", simulation.getCurrentTemperatureKelvin());
         ImGui::Text("Average KE: %.3e J", simulation.getAverageKineticEnergy());
         ImGui::Text("Average Speed: %.3f m/s", simulation.getAverageSpeed());
-        ImGui::Text("Rendered Particles: %d", static_cast<int>(simulation.getParticles().size()));
+        ImGui::Text("Active Particles: %d", static_cast<int>(simulation.getParticles().size()));
     }
 
     void GasUiMenus::drawPressurePlot() const
@@ -272,9 +335,7 @@ namespace physim
         }
 
         const auto &pressureHistory = session.getSimulation().getPressureHistory();
-        ImGui::Separator();
-        ImGui::Spacing();
-        ImGui::TextDisabled("Instantaneous Pressure History");
+        ImGui::SeparatorText("Pressure Plot");
 
         if (pressureHistory.empty())
         {
@@ -322,6 +383,15 @@ namespace physim
             minimumPressure -= 1.0f;
         }
 
+        const float currentPressure = session.getSimulation().getCurrentPressureInstant();
+        const float windowSpan = lastSampleTime - firstSampleTime;
+
+        ImGui::Text("Current value: %.3e N/m", currentPressure);
+        ImGui::TextDisabled("Recent window: %.2f s | range %.3e .. %.3e N/m",
+                            windowSpan,
+                            minimumPressure,
+                            maximumPressure);
+
         ImGui::PlotLines("##pressure-history-plot",
                          renderedPressureValues.data(),
                          static_cast<int>(renderedPressureValues.size()),
@@ -330,18 +400,14 @@ namespace physim
                          minimumPressure,
                          maximumPressure,
                          PRESSURE_PLOT_SIZE);
-        ImGui::TextDisabled("Window span: %.3f s | current %.3e N/m",
-                            lastSampleTime - firstSampleTime,
-                            session.getSimulation().getCurrentPressureInstant());
+        ImGui::TextDisabled("Instantaneous wall loading over the recent sliding window.");
     }
 
     void GasUiMenus::drawControlSection()
     {
         GasSimulation &simulation = session.getSimulation();
 
-        ImGui::Separator();
-        ImGui::Spacing();
-        ImGui::TextDisabled("Controls");
+        ImGui::SeparatorText("Controls");
 
         if (simulation.isRunning())
         {
