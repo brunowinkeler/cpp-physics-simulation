@@ -8,6 +8,7 @@ target_include_directories(PhysimTestSupport INTERFACE
     ${CMAKE_SOURCE_DIR}
     ${CMAKE_SOURCE_DIR}/project1_balistica/src
     ${CMAKE_SOURCE_DIR}/project2_pendulum/src
+    ${CMAKE_SOURCE_DIR}/project3_gas_brownian/src
     ${CMAKE_SOURCE_DIR}/tests
 )
 target_link_libraries(PhysimTestSupport INTERFACE
@@ -31,6 +32,18 @@ add_executable(Project2PendulumSmokeTests
     ${CMAKE_SOURCE_DIR}/project2_pendulum/src/simulation/PendulumSimulation.cpp
     ${CMAKE_SOURCE_DIR}/project2_pendulum/src/ui/PendulumUiMenus.cpp
     ${CMAKE_SOURCE_DIR}/core/physics/IntegrationMethod.cpp
+    ${CMAKE_SOURCE_DIR}/core/simulation/TrajectoryRecorder.cpp
+)
+
+add_executable(Project3GasBrownianSmokeTests
+    project3_gas_brownian/smoke.cpp
+    ${CMAKE_SOURCE_DIR}/project3_gas_brownian/src/physics/GasCollision.cpp
+    ${CMAKE_SOURCE_DIR}/project3_gas_brownian/src/physics/GasPreset.cpp
+    ${CMAKE_SOURCE_DIR}/project3_gas_brownian/src/rendering/GasCamera.cpp
+    ${CMAKE_SOURCE_DIR}/project3_gas_brownian/src/rendering/GasOverlayRenderer.cpp
+    ${CMAKE_SOURCE_DIR}/project3_gas_brownian/src/rendering/GasSceneRenderer.cpp
+    ${CMAKE_SOURCE_DIR}/project3_gas_brownian/src/simulation/GasSimulation.cpp
+    ${CMAKE_SOURCE_DIR}/project3_gas_brownian/src/ui/GasUiMenus.cpp
     ${CMAKE_SOURCE_DIR}/core/simulation/TrajectoryRecorder.cpp
 )
 
@@ -69,6 +82,18 @@ target_link_libraries(Project2PendulumTests PRIVATE
     PhysimTestSupport
 )
 
+add_executable(Project3GasBrownianTests
+    project3_gas_brownian/gas_physics_tests.cpp
+    project3_gas_brownian/gas_simulation_tests.cpp
+    ${CMAKE_SOURCE_DIR}/project3_gas_brownian/src/physics/GasCollision.cpp
+    ${CMAKE_SOURCE_DIR}/project3_gas_brownian/src/physics/GasPreset.cpp
+    ${CMAKE_SOURCE_DIR}/project3_gas_brownian/src/simulation/GasSimulation.cpp
+    ${CMAKE_SOURCE_DIR}/core/simulation/TrajectoryRecorder.cpp
+)
+target_link_libraries(Project3GasBrownianTests PRIVATE
+    PhysimTestSupport
+)
+
 function(physim_configure_smoke_target target)
     target_sources(${target} PRIVATE
         ${rlimgui_SOURCE_DIR}/rlImGui.cpp
@@ -100,12 +125,18 @@ target_include_directories(Project2PendulumSmokeTests PRIVATE
     ${CMAKE_SOURCE_DIR}/project2_pendulum/src
 )
 
+target_include_directories(Project3GasBrownianSmokeTests PRIVATE
+    ${CMAKE_SOURCE_DIR}/project3_gas_brownian/src
+)
+
 physim_configure_smoke_target(${EXECUTABLE_NAME})
 physim_configure_smoke_target(Project2PendulumSmokeTests)
+physim_configure_smoke_target(Project3GasBrownianSmokeTests)
 
 physim_apply_target_defaults(CommonPhysicsTests)
 physim_apply_target_defaults(Project1BalisticaTests)
 physim_apply_target_defaults(Project2PendulumTests)
+physim_apply_target_defaults(Project3GasBrownianTests)
 
 if(BUILD_TESTING)
     add_test(NAME common_physics_domain COMMAND CommonPhysicsTests)
@@ -126,6 +157,12 @@ if(BUILD_TESTING)
         TIMEOUT 15
     )
 
+    add_test(NAME project3_gas_brownian_domain COMMAND Project3GasBrownianTests)
+    set_tests_properties(project3_gas_brownian_domain PROPERTIES
+        LABELS "project3;physics"
+        TIMEOUT 15
+    )
+
     add_test(NAME smoke_graphics COMMAND SmokeTests --ctest)
     set_tests_properties(smoke_graphics PROPERTIES
         ENVIRONMENT "ASAN_OPTIONS=detect_leaks=0"
@@ -138,6 +175,14 @@ if(BUILD_TESTING)
     set_tests_properties(project2_pendulum_smoke_graphics PROPERTIES
         ENVIRONMENT "ASAN_OPTIONS=detect_leaks=0"
         LABELS "graphics;smoke;project2"
+        RUN_SERIAL TRUE
+        TIMEOUT 15
+    )
+
+    add_test(NAME project3_gas_brownian_smoke_graphics COMMAND Project3GasBrownianSmokeTests --ctest)
+    set_tests_properties(project3_gas_brownian_smoke_graphics PROPERTIES
+        ENVIRONMENT "ASAN_OPTIONS=detect_leaks=0"
+        LABELS "graphics;smoke;project3"
         RUN_SERIAL TRUE
         TIMEOUT 15
     )

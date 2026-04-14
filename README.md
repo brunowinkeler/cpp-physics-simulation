@@ -1,6 +1,6 @@
 # cpp-physics-simulation
 
-Progressive physics simulations in C++20, currently including a ballistic projectile module and a pendulum laboratory rendered with Raylib and Dear ImGui.
+Progressive physics simulations in C++20, currently including a ballistic projectile module, a pendulum laboratory, and a gas and Brownian motion laboratory rendered with Raylib and Dear ImGui.
 
 ## Stack
 
@@ -34,6 +34,14 @@ Dependencies are fetched and built by CMake through `FetchContent`.
 - Includes auxiliary analysis plots for energy history and phase-space trajectories.
 - Ships with a project-local theory reference in [project2_pendulum/PHYSICS_THEORY.md](project2_pendulum/PHYSICS_THEORY.md).
 
+### Project 3 — Gas And Brownian Lab
+
+- Simulates a 2D ideal-gas-style particle bath with an optional Brownian tracer particle.
+- Uses elastic wall and particle collisions plus a uniform collision grid for scalable broad-phase detection.
+- Exposes gas presets inspired by real gases, particle counts from hundreds to thousands, fixed physics timestep, and tracer controls through ImGui.
+- Includes an instantaneous-pressure time plot with sliding-window retention and an optional rolling tracer trajectory.
+- Ships with a project-local theory reference in [project3_gas_brownian/PHYSICS_THEORY.md](project3_gas_brownian/PHYSICS_THEORY.md).
+
 ## Prerequisites
 
 Linux native build:
@@ -66,6 +74,7 @@ cmake --preset linux-debug
 cmake --build --preset linux-debug
 ./build/linux-debug/bin/Project1_Balistica
 ./build/linux-debug/bin/Project2_Pendulum
+./build/linux-debug/bin/Project3_Gas_Brownian
 ```
 
 Linux release:
@@ -88,6 +97,7 @@ Generated Windows executable:
 ```text
 build/windows-release/bin/Project1_Balistica.exe
 build/windows-release/bin/Project2_Pendulum.exe
+build/windows-release/bin/Project3_Gas_Brownian.exe
 ```
 
 ## Tests
@@ -105,14 +115,17 @@ Registered tests:
 - `common_physics_domain`: shared tests for integration-method plumbing and trajectory recording.
 - `project1_balistica_domain`: deterministic domain tests for integration, landing interpolation, state transitions, and launch history.
 - `project2_pendulum_domain`: deterministic domain tests for simple and double pendulum physics plus pendulum simulation stepping.
+- `project3_gas_brownian_domain`: deterministic domain tests for gas collisions, macroscopic metrics, and Brownian-tracer history behavior.
 - `smoke_graphics`: short graphical smoke run through Raylib, ImGui, and rlImGui.
 - `project2_pendulum_smoke_graphics`: short graphical smoke run specific to the pendulum module.
+- `project3_gas_brownian_smoke_graphics`: short graphical smoke run specific to the gas and Brownian module.
 
 Test tree layout:
 
 - `tests/common/`: project-independent or cross-project tests.
 - `tests/project1_balistica/`: tests specific to the ballistic module.
 - `tests/project2_pendulum/`: tests specific to the pendulum module.
+- `tests/project3_gas_brownian/`: tests specific to the gas and Brownian module.
 
 Notes about the smoke test:
 
@@ -142,6 +155,7 @@ Repository layout currently follows these boundaries:
 - `core/`: shared constants and the small set of cross-project components that are already stable enough to reuse.
 - `project1_balistica/`: ballistic module, with `app/`, `physics/`, `simulation/`, `rendering/`, and `ui/` under `src/`.
 - `project2_pendulum/`: pendulum module, with `app/`, `physics/`, `simulation/`, `rendering/`, and `ui/` under `src/`.
+- `project3_gas_brownian/`: gas and Brownian module, with `app/`, `physics/`, `simulation/`, `rendering/`, and `ui/` under `src/`.
 - `tests/`: common tests plus project-specific domain tests.
 
 Each new project folder should contain its own `PHYSICS_THEORY.md` reference documenting the governing equations, assumptions, units, and validation targets for that project.
@@ -161,6 +175,14 @@ High-level flow in Project 2:
 3. `PendulumSceneRenderer` renders the grid, trails, rods, and masses.
 4. `PendulumOverlayRenderer` renders HUD information and interaction hints.
 5. `PendulumUiMenus` edits pendulum parameters and visualization settings.
+
+High-level flow in Project 3:
+
+1. `GasBrownianApplication` owns a `GasSession` and orchestrates input, stepping, drawing, and UI.
+2. `GasSimulation` advances the particle bath with a fixed physics timestep, resolves collisions, computes macroscopic metrics, and records pressure and tracer histories.
+3. `GasSceneRenderer` renders the box, particle bath, tracer trail, and optional grid.
+4. `GasOverlayRenderer` renders HUD information and interaction hints.
+5. `GasUiMenus` edits gas presets, particle counts, tracer settings, and inspects the pressure history.
 
 ## Coordinate System
 
