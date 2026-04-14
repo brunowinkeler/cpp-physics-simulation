@@ -29,6 +29,7 @@ Dependencies are fetched and built by CMake through `FetchContent`.
 - Includes both a simple pendulum model and a double pendulum model in the same executable.
 - Supports Runge-Kutta 4 and Symplectic Euler for both models.
 - Tracks energy, simulation time, and one or two trail recorders depending on the active mode.
+- Pendulum trails keep a fixed-size rolling window of recent samples, avoiding the progressive line coarsening that came from whole-history compaction.
 - Exposes gravity, damping, lengths, masses, initial conditions, visualization toggles, and fixed physics timestep through ImGui.
 - Includes auxiliary analysis plots for energy history and phase-space trajectories.
 - Ships with a project-local theory reference in [project2_pendulum/PHYSICS_THEORY.md](project2_pendulum/PHYSICS_THEORY.md).

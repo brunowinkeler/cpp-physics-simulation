@@ -10,6 +10,11 @@ namespace physim
         constexpr float MIN_PHYSICS_TIME_STEP = 0.0001f;
         constexpr float MIN_ANALYSIS_RECORDED_TIME_STEP = 1.0f / 240.0f;
         constexpr std::size_t MAX_ANALYSIS_SAMPLES = 4096;
+        constexpr TrajectoryRetentionPolicy PENDULUM_TRAIL_RETENTION_POLICY{
+            1024,
+            1.0f / 240.0f,
+            TrajectoryRetentionMode::RollingWindow,
+        };
 
         template <typename Sample>
         void compactAnalysisSamples(std::vector<Sample> &samples)
@@ -75,7 +80,9 @@ namespace physim
                                            DoublePendulum &doublePendulum)
         : environment{environment},
           simplePendulum{simplePendulum},
-          doublePendulum{doublePendulum}
+                    doublePendulum{doublePendulum},
+                    primaryTrail{PENDULUM_TRAIL_RETENTION_POLICY},
+                    secondaryTrail{PENDULUM_TRAIL_RETENTION_POLICY}
     {
         reset();
     }

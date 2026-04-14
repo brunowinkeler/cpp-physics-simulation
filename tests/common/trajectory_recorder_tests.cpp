@@ -72,3 +72,40 @@ TEST(TrajectoryRecorderTest, SamplingAccumulatesAcrossSkippedSteps)
     EXPECT_NEAR(points.back().time, static_cast<double>(minRecordedTimeStep * 2.20f), 1.0e-6)
         << "Trajectory recorder should append the next eligible sample";
 }
+
+TEST(TrajectoryRecorderTest, RollingWindowKeepsRecentSamplesDense)
+{
+    constexpr std::size_t maxRecordedPoints = 8;
+    constexpr float sampleTimeStep = 0.05f;
+
+    physim::TrajectoryRecorder trajectoryRecorder{{
+        maxRecordedPoints,
+        0.0f,
+        physim::TrajectoryRetentionMode::RollingWindow,
+    }};
+
+    for (std::size_t index = 0; index < 20; ++index)
+    {
+        const float time = static_cast<float>(index) * sampleTimeStep;
+        trajectoryRecorder.record(static_cast<float>(index),
+                                  static_cast<float>(index) * 2.0f,
+                                  time,
+                                  1.0f,
+                                  true);
+    }
+
+    const auto &points = trajectoryRecorder.getPoints();
+
+    ASSERT_EQ(points.size(), maxRecordedPoints)
+        << "Rolling window retention should keep only the configured number of recent samples";
+    EXPECT_NEAR(points.front().time, 12.0 * sampleTimeStep, 1.0e-6)
+        << "Rolling window retention should discard the oldest samples first";
+    EXPECT_NEAR(points.back().time, 19.0 * sampleTimeStep, 1.0e-6)
+        << "Rolling window retention should preserve the latest sample";
+
+    for (std::size_t index = 1; index < points.size(); ++index)
+    {
+        EXPECT_NEAR(points[index].time - points[index - 1].time, sampleTimeStep, 1.0e-6)
+            << "Rolling window retention should keep the original sampling density inside the retained window";
+    }
+}

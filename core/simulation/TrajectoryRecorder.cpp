@@ -5,6 +5,11 @@
 
 namespace physim
 {
+    TrajectoryRecorder::TrajectoryRecorder(const TrajectoryRetentionPolicy &retentionPolicy)
+        : retentionPolicy{sanitizeRetentionPolicy(retentionPolicy)}
+    {
+    }
+
     void TrajectoryRecorder::record(float x, float y, float time, float speed, bool forceSample)
     {
         const TrajectoryPoint point{x, y, time, speed};
@@ -31,6 +36,12 @@ namespace physim
         retainWithinBudget();
     }
 
+    void TrajectoryRecorder::setRetentionPolicy(const TrajectoryRetentionPolicy &retentionPolicy)
+    {
+        this->retentionPolicy = sanitizeRetentionPolicy(retentionPolicy);
+        retainWithinBudget();
+    }
+
     void TrajectoryRecorder::clear()
     {
         points.clear();
@@ -43,6 +54,12 @@ namespace physim
 
     void TrajectoryRecorder::retainWithinBudget()
     {
+        if (retentionPolicy.mode == TrajectoryRetentionMode::RollingWindow)
+        {
+            discardOldestRecordedPoints();
+            return;
+        }
+
         while (points.size() > retentionPolicy.maxRecordedPoints)
         {
             compactRecordedPoints();
@@ -72,6 +89,17 @@ namespace physim
         points = std::move(compactedPoints);
     }
 
+    void TrajectoryRecorder::discardOldestRecordedPoints()
+    {
+        if (points.size() <= retentionPolicy.maxRecordedPoints)
+        {
+            return;
+        }
+
+        const std::size_t overflow = points.size() - retentionPolicy.maxRecordedPoints;
+        points.erase(points.begin(), points.begin() + static_cast<std::ptrdiff_t>(overflow));
+    }
+
     bool TrajectoryRecorder::shouldAppendPoint(const TrajectoryPoint &point, bool forceSample) const
     {
         if (forceSample || points.empty())
@@ -80,6 +108,15 @@ namespace physim
         }
 
         return (point.time - points.back().time) >= retentionPolicy.minRecordedTimeStep;
+    }
+
+    TrajectoryRetentionPolicy TrajectoryRecorder::sanitizeRetentionPolicy(const TrajectoryRetentionPolicy &retentionPolicy)
+    {
+        return {
+            std::max<std::size_t>(retentionPolicy.maxRecordedPoints, 2u),
+            std::max(retentionPolicy.minRecordedTimeStep, 0.0f),
+            retentionPolicy.mode,
+        };
     }
 
     std::optional<TrajectoryPoint> TrajectoryRecorder::getApexPoint() const
