@@ -49,7 +49,6 @@ FetchContent_Declare(
     rlimgui
     GIT_REPOSITORY https://github.com/raylib-extras/rlImGui.git
     GIT_TAG        286e11acd6c785004c9550c7ed3762add2ae3d47
-    GIT_SHALLOW    TRUE
 )
 FetchContent_MakeAvailable(rlimgui)
 

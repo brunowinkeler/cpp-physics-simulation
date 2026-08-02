@@ -1,84 +1,84 @@
-# Teoria Física — Projeto 2: Pêndulo Simples e Pêndulo Duplo
+# Physics Theory — Project 2: Simple and Double Pendulums
 
-## Objetivo
+## Objective
 
-Este projeto estuda sistemas oscilatórios rotacionais usando coordenadas angulares em vez de coordenadas cartesianas diretas. O foco está em três pilares:
+This project studies rotational oscillating systems using angular coordinates instead of direct Cartesian coordinates. It focuses on three areas:
 
-1. dinâmica rotacional;
-2. integração numérica de equações diferenciais ordinárias;
-3. transição entre comportamento regular e comportamento caótico.
+1. rotational dynamics;
+2. numerical integration of ordinary differential equations;
+3. the transition between regular and chaotic behavior.
 
-## Convenções adotadas
+## Conventions
 
-- Unidade de comprimento: metro (m)
-- Unidade de massa: quilograma (kg)
-- Unidade de tempo: segundo (s)
-- Unidade de ângulo na interface: grau (deg)
-- Unidade de ângulo no integrador: radiano (rad)
-- Gravidade: m/s²
-- Velocidade angular: rad/s
+- Length unit: meter (m)
+- Mass unit: kilogram (kg)
+- Time unit: second (s)
+- Angle unit in the interface: degree (deg)
+- Angle unit in the integrator: radian (rad)
+- Gravity: m/s²
+- Angular velocity: rad/s
 
-O ângulo $\theta = 0$ representa a haste apontando para baixo, em equilíbrio estável. Valores positivos giram no sentido anti-horário quando observados no plano cartesiano tradicional.
+The angle $\theta = 0$ represents the rod pointing downward in stable equilibrium. Positive values rotate counterclockwise when viewed in the conventional Cartesian plane.
 
-## Pêndulo simples
+## Simple pendulum
 
-### Modelo
+### Model
 
-O pêndulo simples é modelado como uma massa pontual presa a uma haste rígida e sem massa, com comprimento $L$.
+The simple pendulum is modeled as a point mass attached to a rigid, massless rod of length $L$.
 
-Sua equação de movimento sem aproximações é:
+Its exact equation of motion is:
 
 $$
 \ddot{\theta} = -\frac{g}{L}\sin(\theta)
 $$
 
-Neste projeto também é usado um termo de amortecimento linear proporcional à velocidade angular:
+The project also uses a linear damping term proportional to angular velocity:
 
 $$
 \ddot{\theta} = -\frac{g}{L}\sin(\theta) - c\dot{\theta}
 $$
 
-onde:
+where:
 
-- $g$ é a gravidade;
-- $L$ é o comprimento da haste;
-- $c$ é o coeficiente de amortecimento angular.
+- $g$ is gravity;
+- $L$ is the rod length;
+- $c$ is the angular damping coefficient.
 
-### Aproximação de pequeno ângulo
+### Small-angle approximation
 
-Quando $|\theta| \ll 1$ rad, vale $\sin(\theta) \approx \theta$ e a equação se torna linear:
+When $|\theta| \ll 1$ rad, $\sin(\theta) \approx \theta$, and the equation becomes linear:
 
 $$
 \ddot{\theta} + \frac{g}{L}\theta = 0
 $$
 
-Nesse regime, o período teórico é:
+In this regime, the theoretical period is:
 
 $$
 T \approx 2\pi\sqrt{\frac{L}{g}}
 $$
 
-Essa expressão é usada como referência de validação numérica nos testes.
+This expression is used as a numerical validation reference in the tests.
 
-### Energia mecânica
+### Mechanical energy
 
-Com massa $m$, a energia total do pêndulo simples pode ser escrita como:
+For mass $m$, the simple pendulum's total energy can be written as:
 
 $$
 E = \frac{1}{2}mL^2\omega^2 + mgL\left(1 - \cos(\theta)\right)
 $$
 
-onde $\omega = \dot{\theta}$.
+where $\omega = \dot{\theta}$.
 
-Sem amortecimento, a energia deve permanecer aproximadamente constante. Com amortecimento, ela deve decair ao longo do tempo.
+Without damping, the energy should remain approximately constant. With damping, it should decrease over time.
 
-## Pêndulo duplo
+## Double pendulum
 
-### Modelo
+### Model
 
-O pêndulo duplo possui duas massas pontuais $m_1$ e $m_2$ acopladas por duas hastes rígidas de comprimentos $L_1$ e $L_2$. Os graus de liberdade são $\theta_1$ e $\theta_2$.
+The double pendulum has two point masses, $m_1$ and $m_2$, coupled by two rigid rods of lengths $L_1$ and $L_2$. Its degrees of freedom are $\theta_1$ and $\theta_2$.
 
-As equações exatas são não lineares, acopladas e dependem simultaneamente dos ângulos e das velocidades angulares. Uma forma clássica para as acelerações angulares é:
+The exact equations are nonlinear and coupled, and they depend simultaneously on the angles and angular velocities. One standard form for the angular accelerations is:
 
 $$
 \ddot{\theta}_1 = \frac{-g(2m_1+m_2)\sin\theta_1 - m_2g\sin(\theta_1 - 2\theta_2) - 2\sin(\theta_1-\theta_2)m_2\left(\omega_2^2L_2 + \omega_1^2L_1\cos(\theta_1-\theta_2)\right)}{L_1\left(2m_1+m_2-m_2\cos(2\theta_1-2\theta_2)\right)}
@@ -88,7 +88,7 @@ $$
 \ddot{\theta}_2 = \frac{2\sin(\theta_1-\theta_2)\left(\omega_1^2L_1(m_1+m_2) + g(m_1+m_2)\cos\theta_1 + \omega_2^2L_2m_2\cos(\theta_1-\theta_2)\right)}{L_2\left(2m_1+m_2-m_2\cos(2\theta_1-2\theta_2)\right)}
 $$
 
-Neste projeto são adicionados também termos lineares de amortecimento:
+The project also adds linear damping terms:
 
 $$
 \ddot{\theta}_1 \leftarrow \ddot{\theta}_1 - c_1\omega_1
@@ -98,9 +98,9 @@ $$
 \ddot{\theta}_2 \leftarrow \ddot{\theta}_2 - c_2\omega_2
 $$
 
-### Energia mecânica
+### Mechanical energy
 
-As posições das massas são:
+The mass positions are:
 
 $$
 x_1 = L_1\sin\theta_1, \qquad y_1 = -L_1\cos\theta_1
@@ -110,74 +110,74 @@ $$
 x_2 = x_1 + L_2\sin\theta_2, \qquad y_2 = y_1 - L_2\cos\theta_2
 $$
 
-As velocidades são obtidas derivando essas expressões. A energia total é:
+The velocities are obtained by differentiating these expressions. The total energy is:
 
 $$
 E = \frac{1}{2}m_1(v_{x1}^2 + v_{y1}^2) + \frac{1}{2}m_2(v_{x2}^2 + v_{y2}^2) + U
 $$
 
-com potencial gravitacional relativo à configuração de menor energia:
+with gravitational potential measured relative to the lowest-energy configuration:
 
 $$
 U = m_1gL_1(1-\cos\theta_1) + m_2g\left(L_1(1-\cos\theta_1) + L_2(1-\cos\theta_2)\right)
 $$
 
-## Integração numérica
+## Numerical integration
 
-O projeto implementa dois integradores:
+The project implements two integrators:
 
 ### Symplectic Euler
 
-- Atualiza primeiro as velocidades angulares;
-- Depois atualiza os ângulos com as velocidades já corrigidas.
+- Updates the angular velocities first;
+- Then updates the angles using the corrected velocities.
 
-É simples, barato e muitas vezes preserva melhor a estrutura qualitativa do sistema do que o Euler explícito padrão.
+It is simple and inexpensive, and it often preserves the system's qualitative structure better than standard explicit Euler.
 
-### Runge-Kutta de 4ª ordem (RK4)
+### Fourth-order Runge-Kutta (RK4)
 
-Usa quatro avaliações intermediárias por passo de tempo e produz erro local muito menor que métodos de primeira ordem.
+It uses four intermediate evaluations per time step and produces much lower local error than first-order methods.
 
-No pêndulo simples, o RK4 deve se aproximar muito bem do período teórico para pequenos ângulos. No pêndulo duplo, ele ajuda a reduzir erro local em um sistema altamente sensível às condições iniciais.
+For the simple pendulum, RK4 should closely approximate the theoretical small-angle period. For the double pendulum, it helps reduce local error in a system that is highly sensitive to initial conditions.
 
-## Caos e sensibilidade às condições iniciais
+## Chaos and sensitivity to initial conditions
 
-O pêndulo duplo é um exemplo clássico de sistema determinístico que pode apresentar comportamento caótico. Isso significa que:
+The double pendulum is a classic example of a deterministic system that can exhibit chaotic behavior. This means that:
 
-- as equações são completamente determinísticas;
-- pequenas diferenças no estado inicial podem crescer rapidamente com o tempo;
-- previsões de longo prazo tornam-se muito sensíveis ao erro numérico.
+- the equations are fully deterministic;
+- small differences in the initial state can grow rapidly over time;
+- long-term predictions become highly sensitive to numerical error.
 
-Por isso, testes do pêndulo duplo devem priorizar:
+Therefore, double-pendulum tests should prioritize:
 
-- ausência de `NaN` e `Inf`;
-- estabilidade numérica para passos de tempo razoáveis;
-- invariantes básicos quando o sistema está sem amortecimento;
-- casos especiais simples, como o repouso exato em $\theta_1 = \theta_2 = 0$.
+- absence of `NaN` and `Inf`;
+- numerical stability for reasonable time steps;
+- basic invariants when the system has no damping;
+- simple special cases, such as exact rest at $\theta_1 = \theta_2 = 0$.
 
-## O que validar na prática
+## Practical validation targets
 
-### Pêndulo simples
+### Simple pendulum
 
-- período para pequenos ângulos;
-- conservação aproximada de energia sem amortecimento;
-- decaimento de energia com amortecimento;
-- estabilidade para diferentes métodos de integração.
+- small-angle period;
+- approximate energy conservation without damping;
+- energy decay with damping;
+- stability with different integration methods.
 
-### Pêndulo duplo
+### Double pendulum
 
-- repouso estável na configuração vertical para baixo;
-- evolução finita sem explosões numéricas;
-- trilhas coerentes dos dois bobs;
-- comportamento qualitativo distinto entre regimes simples e caóticos.
+- stable rest in the downward vertical configuration;
+- finite evolution without numerical blow-up;
+- coherent trails for both bobs;
+- qualitatively distinct behavior between regular and chaotic regimes.
 
-## Limites do modelo
+## Model limitations
 
-Este projeto deliberadamente simplifica vários aspectos:
+This project deliberately simplifies several aspects:
 
-- hastes são rígidas e sem massa;
-- não há atrito no pivô além do amortecimento linear imposto no modelo;
-- não há colisão entre massas ou hastes;
-- não há resistência do ar distribuída ao longo da haste;
-- o problema é bidimensional.
+- rods are rigid and massless;
+- there is no pivot friction beyond the model's imposed linear damping;
+- masses and rods do not collide;
+- there is no distributed air resistance along the rods;
+- the problem is two-dimensional.
 
-Essas simplificações são adequadas para estudar integração numérica, energia, periodicidade e caos sem introduzir complexidade desnecessária cedo demais.
+These simplifications are appropriate for studying numerical integration, energy, periodicity, and chaos without introducing unnecessary complexity too early.

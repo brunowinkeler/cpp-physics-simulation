@@ -2,6 +2,11 @@
 
 Progressive physics simulations in C++20, currently including a ballistic projectile module, a pendulum laboratory, and a gas and Brownian motion laboratory rendered with Raylib and Dear ImGui.
 
+This repository remains focused on native simulation development and testing.
+The separate [bwinkeler-physics](https://github.com/brunowinkeler/bwinkeler-physics)
+project consumes a pinned revision of these sources and owns the browser-specific
+Emscripten build, web application shell, and deployment.
+
 ## Stack
 
 | Role | Library | Version |
@@ -195,3 +200,7 @@ High-level flow in Project 3:
 - Archived trajectories keep display-oriented sampled points, not every raw integrator step.
 - The graphical smoke test still depends on a valid display server when it is not running in skip mode.
 - The repository currently uses separate executables per project rather than a single launcher application.
+
+## License
+
+MIT. See [LICENSE](LICENSE) and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
