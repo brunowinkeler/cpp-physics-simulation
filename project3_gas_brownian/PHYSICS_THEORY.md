@@ -1,123 +1,123 @@
-# Teoria Física - Projeto 3: Gás Ideal e Movimento Browniano
+# Physics Theory - Project 3: Ideal Gas and Brownian Motion
 
-## Objetivo
+## Objective
 
-Este projeto introduz um laboratório 2D de partículas para explorar:
+This project introduces a two-dimensional particle laboratory for exploring:
 
-1. colisões elásticas em muitas partículas;
-2. temperatura como medida da energia cinética média;
-3. pressão como transferência de momento nas paredes;
-4. movimento Browniano de uma partícula traçadora em um banho térmico.
+1. elastic collisions among many particles;
+2. temperature as a measure of average kinetic energy;
+3. pressure as momentum transfer at the walls;
+4. Brownian motion of a tracer particle in a thermal bath.
 
-## Convenções e limites do modelo
+## Conventions and model limits
 
-- O projeto usa uma caixa bidimensional retangular.
-- As partículas são discos rígidos com colisões elásticas perfeitas.
-- A massa por partícula é inspirada em gases reais, a partir da massa molar.
-- O raio usado na colisão e no desenho é um raio efetivo didático, não o diâmetro molecular literal.
-- A escala térmica do simulador é ajustada para legibilidade e estabilidade interativa.
+- The project uses a rectangular two-dimensional box.
+- Particles are rigid disks with perfectly elastic collisions.
+- The mass per particle is inspired by real gases, derived from the molar mass.
+- The radius used for collisions and drawing is a didactic effective radius, not the literal molecular diameter.
+- The simulator's thermal scale is tuned for readability and interactive stability.
 
-Isso significa que o projeto preserva analogias físicas importantes, como a relação entre massa, agitação térmica e colisões, mas não pretende reproduzir quantitativamente um gás real em escala molecular absoluta.
+This means the project preserves important physical analogies, such as the relationship between mass, thermal agitation, and collisions, but it does not attempt to reproduce a real gas quantitatively at an absolute molecular scale.
 
-## Estado de cada partícula
+## State of each particle
 
-Cada partícula possui:
+Each particle has:
 
-- posição $\mathbf{x} = (x, y)$;
-- velocidade $\mathbf{v} = (v_x, v_y)$;
-- massa $m$;
-- raio efetivo $r$.
+- position $\mathbf{x} = (x, y)$;
+- velocity $\mathbf{v} = (v_x, v_y)$;
+- mass $m$;
+- effective radius $r$.
 
-Durante o passo de tempo, a posição é atualizada por:
+During the time step, the position is updated by:
 
 $$
 \mathbf{x}_{n+1} = \mathbf{x}_n + \mathbf{v}_n \Delta t
 $$
 
-Como não há força contínua de longo alcance no v1, a dinâmica entre colisões é puramente inercial.
+Because there is no continuous long-range force in v1, the dynamics between collisions is purely inertial.
 
-## Colisões com as paredes
+## Collisions with the walls
 
-As paredes da caixa refletem elasticamente as partículas. Quando uma partícula atinge uma parede, a componente normal da velocidade troca de sinal.
+The box walls reflect the particles elastically. When a particle hits a wall, the normal component of the velocity changes sign.
 
-Por exemplo, em uma parede vertical:
+For example, at a vertical wall:
 
 $$
 v_x' = -v_x
 $$
 
-e em uma parede horizontal:
+and at a horizontal wall:
 
 $$
 v_y' = -v_y
 $$
 
-O impulso transferido à parede é acumulado para estimar a pressão instantânea.
+The impulse transferred to the wall is accumulated to estimate the instantaneous pressure.
 
-## Colisões entre partículas
+## Collisions between particles
 
-Quando dois discos se sobrepõem, o resolvedor usa o vetor normal da linha entre seus centros e aplica a fórmula padrão de colisão elástica ao longo dessa normal.
+When two disks overlap, the solver uses the normal vector of the line between their centers and applies the standard elastic collision formula along that normal.
 
-Para um coeficiente de restituição $e = 1$:
+For a restitution coefficient $e = 1$:
 
 $$
 j = -\frac{(1 + e)(\mathbf{v}_{rel} \cdot \mathbf{n})}{\frac{1}{m_1} + \frac{1}{m_2}}
 $$
 
-com $\mathbf{n}$ sendo a normal de contato e $\mathbf{v}_{rel}$ a velocidade relativa.
+with $\mathbf{n}$ being the contact normal and $\mathbf{v}_{rel}$ the relative velocity.
 
-Esse impulso atualiza as velocidades e uma correção posicional remove a sobreposição geométrica residual.
+This impulse updates the velocities, and a positional correction removes the residual geometric overlap.
 
-## Temperatura efetiva
+## Effective temperature
 
-Em 2D, a energia cinética translacional média por partícula é usada como base para uma temperatura efetiva:
+In 2D, the average translational kinetic energy per particle is used as the basis for an effective temperature:
 
 $$
 \langle E_k \rangle = \frac{1}{N}\sum_{i=1}^{N} \frac{1}{2} m_i \|\mathbf{v}_i\|^2
 $$
 
-e então:
+and then:
 
 $$
 T_{eff} = \frac{\langle E_k \rangle}{k_{eff}}
 $$
 
-onde $k_{eff}$ é uma constante térmica efetiva do simulador. Ela preserva relações qualitativas entre massa e agitação, mas não pretende ser a constante de Boltzmann em uma escala molecular literal.
+where $k_{eff}$ is an effective thermal constant of the simulator. It preserves qualitative relationships between mass and agitation, but it is not intended to be the Boltzmann constant on a literal molecular scale.
 
-## Pressão instantânea
+## Instantaneous pressure
 
-A pressão do v1 é tratada como uma grandeza instantânea derivada do impulso total transferido às paredes dentro de uma janela temporal deslizante.
+Pressure in v1 is treated as an instantaneous quantity derived from the total impulse transferred to the walls within a sliding time window.
 
-Se $\Delta p_{wall}$ é o impulso total acumulado nas paredes durante a janela e $\Delta t_{window}$ sua duração efetiva, então a grandeza exibida é:
+If $\Delta p_{wall}$ is the total impulse accumulated at the walls during the window and $\Delta t_{window}$ is its effective duration, then the displayed quantity is:
 
 $$
 P_{inst} = \frac{\Delta p_{wall}}{\Delta t_{window} L_{wall}}
 $$
 
-onde $L_{wall}$ é o perímetro da caixa.
+where $L_{wall}$ is the perimeter of the box.
 
-Em um sistema 2D, essa quantidade deve ser lida como uma analogia de carga de parede por unidade de comprimento, útil para comparação qualitativa entre cenários.
+In a 2D system, this quantity should be read as an analogy for wall load per unit length, useful for qualitative comparison between scenarios.
 
-## Movimento Browniano
+## Brownian motion
 
-No modo Browniano, uma única partícula traçadora recebe massa e raio maiores que as partículas do banho térmico. Ela sofre colisões sucessivas com muitas partículas menores, produzindo uma trajetória irregular e difusiva.
+In Brownian mode, a single tracer particle receives greater mass and radius than the thermal-bath particles. It undergoes successive collisions with many smaller particles, producing an irregular, diffusive trajectory.
 
-O projeto registra apenas a trajetória dessa partícula destacada, e o usuário pode desligar esse registro para reduzir custo de atualização e desenho.
+The project records only the trajectory of that highlighted particle, and the user can turn that recording off to reduce update and drawing cost.
 
-## Estratégia numérica do v1
+## Numerical strategy of v1
 
-- integração por passo fixo;
-- colisões elásticas resolvidas diretamente;
-- malha uniforme para reduzir o custo de detecção de pares;
-- histórico temporal de pressão em janela deslizante;
-- trilha da partícula traçadora em janela deslizante.
+- fixed-step integration;
+- elastic collisions resolved directly;
+- uniform grid to reduce the cost of pair detection;
+- pressure time history in a sliding window;
+- tracer particle trail in a sliding window.
 
-## Validação esperada
+## Expected validation
 
-O v1 deve validar pelo menos:
+v1 must validate at least:
 
-- conservação de momento linear em colisões partícula-partícula;
-- conservação de energia cinética nas colisões elásticas dentro das tolerâncias numéricas;
-- reflexão correta em paredes;
-- estabilidade do plot temporal de pressão sem degradação progressiva;
-- trajetória Browniana recente densa e opcional.
+- conservation of linear momentum in particle-particle collisions;
+- conservation of kinetic energy in elastic collisions within numerical tolerances;
+- correct reflection at walls;
+- stability of the pressure time plot without progressive degradation;
+- a dense and optional recent Brownian trajectory.
