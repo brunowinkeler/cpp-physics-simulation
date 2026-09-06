@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  native:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        preset:
+          - linux-debug
+          - linux-release
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v7
+
+      - name: Install native graphics build dependencies
+        run: >-
+          sudo apt-get update && sudo apt-get install -y
+          ninja-build libasound2-dev libx11-dev libxrandr-dev libxi-dev
+          libgl1-mesa-dev libglu1-mesa-dev libxcursor-dev libxinerama-dev
+
+      - name: Configure ${{ matrix.preset }}
+        run: cmake --preset ${{ matrix.preset }}
+
+      - name: Build ${{ matrix.preset }}
+        run: cmake --build --preset ${{ matrix.preset }} --parallel
+
+      # Unsetting the display variables keeps the graphics smoke tests headless.
+      - name: Run tests
+        run: >-
+          env -u DISPLAY -u WAYLAND_DISPLAY
+          ctest --test-dir build/${{ matrix.preset }} --output-on-failure

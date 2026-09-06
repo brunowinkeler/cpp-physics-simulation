@@ -53,7 +53,9 @@ cmake_install.cmake
 _deps/
 
 # Folders
-.github/
+# Keep .github local except for the CI workflows, which must be versioned.
+.github/*
+!.github/workflows/
 
 # Visual Studio Code
 settings.json
